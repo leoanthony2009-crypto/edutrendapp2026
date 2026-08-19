@@ -1,0 +1,158 @@
+@import "tailwindcss";
+
+/* Bloom semantic design tokens — README § Design Tokens.
+   Metadata/warn/concern text tones are darkened from the prototype values to meet
+   WCAG 2.2 AA 4.5:1 on cream/white (DESIGN_REVIEW P1-2). */
+@theme {
+  --font-display: "Bricolage Grotesque", "Instrument Sans", system-ui, sans-serif;
+  --font-body: "Instrument Sans", system-ui, sans-serif;
+
+  /* Surfaces */
+  --color-cream: #FAF6EC;
+  --color-cream-dim: #F3EFE2;
+  --color-sand: #EDE6D3;
+  --color-line: #E8E2CF;
+  --color-line-strong: #E0D9C6;
+
+  /* Brand */
+  --color-green: #295C4D;
+  --color-green-deep: #1D4438;
+  --color-charcoal: #22342C;
+  --color-gold: #C8A951;
+  --color-gold-bright: #E9B93B;
+
+  /* Gold-tinted surfaces */
+  --color-gold-tint: #FDF9EF;
+  --color-gold-tint-line: #EAD9A8;
+  --color-gold-chip: #F4EDDA;
+  /* Text on gold tints — darkened from #8A7A45 for AA */
+  --color-gold-ink: #6F6335;
+
+  /* Synodal / theme accents */
+  --color-relating: #C8A951;
+  --color-listening: #4A8AD0;
+  --color-discerning: #5BAA70;
+  --color-selfempty: #8E6FB6;
+  --color-safety: #6E2B2F;
+  /* Badge/deep variants — dark enough for white 10px labels at AA */
+  --color-listening-deep: #2E6CAE;
+  --color-discerning-deep: #38754B;
+  --color-selfempty-deep: #6E548D;
+  --color-selfempty-tint: #F1ECF7;
+
+  /* Signal */
+  --color-good: #5BAA70;
+  --color-warn: #E19A45;
+  --color-concern: #D9634E;
+  /* Text-safe signal tones (AA on white/cream) */
+  --color-good-text: #3E7A50;
+  --color-warn-text: #96601F;
+  --color-concern-text: #A03F2E;
+
+  /* Text */
+  --color-ink: #22342C;
+  --color-ink-soft: #5A6156;
+  /* Metadata — darkened from #98917C for AA */
+  --color-meta: #6F6A58;
+  --color-ondark: #F3EFE2;
+  --color-ondark-soft: #BFD3C6;
+  --color-ondark-gold: #E9B93B;
+  --color-success-bg: #EAF4EC;
+  --color-success-line: #BFDCC8;
+  --color-success-text: #2F5E3F;
+
+  /* Radii */
+  --radius-card: 18px;
+  --radius-row: 13px;
+  --radius-input: 14px;
+  --radius-chip: 99px;
+  --radius-shell: 38px;
+
+  --shadow-shell: 0 18px 50px rgba(34, 52, 44, 0.14);
+
+  --animate-petal: petal 0.65s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+  --animate-fade-up: fadeUp 0.55s ease both;
+  --animate-breathe: breathe 5s ease-in-out infinite;
+
+  @keyframes petal {
+    from { transform: scale(0); }
+    to { transform: scale(1); }
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes breathe {
+    0%, 100% { transform: scale(1) rotate(0deg); }
+    50% { transform: scale(1.05) rotate(3deg); }
+  }
+}
+
+@layer base {
+  html {
+    font-family: var(--font-body);
+    color: var(--color-ink);
+    background: var(--color-cream);
+  }
+  body {
+    margin: 0;
+    -webkit-font-smoothing: antialiased;
+  }
+  /* Visible keyboard focus on every interactive element (DESIGN_REVIEW P1-1) */
+  :focus-visible {
+    outline: 2.5px solid var(--color-green);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+  button {
+    font-family: var(--font-body);
+    cursor: pointer;
+  }
+  input, textarea {
+    font-family: var(--font-body);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer utilities {
+  .font-display {
+    font-family: var(--font-display);
+  }
+  .micro-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+  /* Screen-reader-only content (chart text alternatives etc.) */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+  /* Minimum 44px hit area for small visual controls (DESIGN_REVIEW P2-12) */
+  .hit-target {
+    position: relative;
+  }
+  .hit-target::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: max(100%, 44px);
+    height: max(100%, 44px);
+    transform: translate(-50%, -50%);
+  }
+}
