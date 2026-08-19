@@ -32,6 +32,7 @@ import {
   watchlist,
 } from './safeguarding.mjs'
 import { seed } from './seed.mjs'
+import { mountExtra } from './routes-extra.mjs'
 
 const CHAMPION_OUTCOMES = ['spoke_with_pupil', 'parent_contact', 'safeguarding_referral', 'no_further_action']
 const WATCH_ACTIONS = ['Reviewed', 'Parent contact', 'Safeguarding']
@@ -458,6 +459,9 @@ export function createApp(db, { deliveryAdapter } = {}) {
     )
     res.json({ ok: true })
   })
+
+  /* ── Surveys, POUI drafting, analytics, feedback loop, BSC export ── */
+  mountExtra(app, db, auth)
 
   /* ── Test hooks (only with BLOOM_TEST=1) ── */
 
