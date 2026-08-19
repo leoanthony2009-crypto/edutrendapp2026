@@ -1,0 +1,17 @@
+{
+  "name": "Bloom — Your Voice Matters",
+  "short_name": "Bloom",
+  "description": "The BLOOM Foundation's pastoral sensing layer for Trinidad & Tobago Catholic schools.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FAF6EC",
+  "theme_color": "#295C4D",
+  "icons": [
+    {
+      "src": "/bloom-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

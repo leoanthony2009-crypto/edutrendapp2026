@@ -1,0 +1,142 @@
+/* Self-hosted fonts — bundled so the PWA works fully offline with no
+ * external requests (and no failed loads when the network is down). */
+@import '@fontsource-variable/bricolage-grotesque/opsz.css';
+@import '@fontsource-variable/instrument-sans';
+@import 'tailwindcss';
+
+@theme {
+  /* Surfaces */
+  --color-bloom-cream: #faf6ec;
+  --color-bloom-cream-dim: #f3efe2;
+  --color-bloom-sand: #ede6d3;
+  --color-bloom-line: #e8e2cf;
+  --color-bloom-line-strong: #e0d9c6;
+
+  /* Brand */
+  --color-bloom-green: #295c4d;
+  --color-bloom-green-deep: #1d4438;
+  --color-bloom-charcoal: #22342c;
+  --color-bloom-gold: #c8a951;
+  --color-bloom-gold-bright: #e9b93b;
+  --color-bloom-gold-tint: #fdf9ef;
+  --color-bloom-gold-line: #ead9a8;
+  --color-bloom-gold-chip: #f4edda;
+
+  /* Synodal / theme */
+  --color-mark-relating: #c8a951;
+  --color-mark-listening: #4a8ad0;
+  --color-mark-discerning: #5baa70;
+  --color-mark-selfemptying: #8e6fb6;
+  --color-mark-safety: #6e2b2f;
+
+  /* Signals */
+  --color-signal-good: #5baa70;
+  --color-signal-warn: #e19a45;
+  --color-signal-concern: #d9634e;
+
+  /* Ink — metadata darkened from the prototype's #98917C per DESIGN_REVIEW P1.2 */
+  --color-ink: #22342c;
+  --color-ink-soft: #5a6156;
+  --color-ink-meta: #6f6a58;
+  --color-ink-gold: #756628;
+  --color-ink-burgundy: #6e2b2f;
+  --color-on-dark: #f3efe2;
+  --color-on-dark-soft: #bfd3c6;
+  --color-on-dark-meta: #afc3b6;
+
+  /* Type */
+  --font-display: 'Bricolage Grotesque Variable', 'Bricolage Grotesque', ui-sans-serif, system-ui, sans-serif;
+  --font-body: 'Instrument Sans Variable', 'Instrument Sans', ui-sans-serif, system-ui, sans-serif;
+
+  /* Radii */
+  --radius-card: 18px;
+  --radius-row: 14px;
+  --radius-input: 13px;
+  --radius-shell: 38px;
+
+  /* Motion */
+  --ease-bloom: cubic-bezier(0.2, 0.9, 0.3, 1.2);
+
+  --animate-petal: petal 0.6s var(--ease-bloom) both;
+  --animate-fade-up: fadeUp 0.55s ease both;
+  --animate-breathe: breathe 5s ease-in-out infinite;
+
+  @keyframes petal {
+    from {
+      transform: scale(0);
+    }
+    to {
+      transform: scale(1);
+    }
+  }
+  @keyframes fadeUp {
+    from {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @keyframes breathe {
+    0%,
+    100% {
+      transform: scale(1) rotate(0deg);
+    }
+    50% {
+      transform: scale(1.05) rotate(3deg);
+    }
+  }
+}
+
+@layer base {
+  html {
+    font-family: var(--font-body);
+    color: var(--color-ink);
+    background: var(--color-bloom-cream-dim);
+  }
+  body {
+    margin: 0;
+    min-height: 100dvh;
+  }
+  button {
+    font: inherit;
+    cursor: pointer;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-bloom-green);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@utility micro-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+@utility sr-only-focusable {
+  &:not(:focus):not(:focus-within) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+  }
+}
