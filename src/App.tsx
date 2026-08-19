@@ -11,6 +11,7 @@ import { QuestionManager } from './screens/QuestionManager'
 import { SurveyBuilder } from './screens/SurveyBuilder'
 import { WhatsHot } from './screens/WhatsHot'
 import { Profile } from './screens/Profile'
+import { ChampionWorkspace } from './screens/ChampionWorkspace'
 
 // Trends carries Recharts — code-split so the shell stays light.
 const Trends = lazy(() => import('./screens/Trends').then((m) => ({ default: m.Trends })))
@@ -60,6 +61,7 @@ function Shell() {
             <Route path="/profile" element={<Profile />} />
             <Route path="/manage" element={<QuestionManager />} />
             <Route path="/builder" element={<SurveyBuilder />} />
+            <Route path="/champion" element={<ChampionWorkspace />} />
             <Route path="*" element={<Navigate to="/today" replace />} />
           </Routes>
         </AppShell>

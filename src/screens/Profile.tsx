@@ -50,6 +50,16 @@ export function Profile() {
           </Link>
         ) : null}
 
+        {role === 'leader' ? (
+          <Link to="/champion" className={rowClass}>
+            <span>
+              <span className="block text-[13.5px] font-semibold">Champion workspace</span>
+              <span className="mt-0.5 block text-[11px] text-ink-meta">Alerts and the One Child watchlist</span>
+            </span>
+            <ChevronRight aria-hidden="true" className="h-4 w-4 text-ink-meta" />
+          </Link>
+        ) : null}
+
         <div className={rowClass.replace('hover:border-bloom-green', '')}>
           <div>
             <div className="text-[13.5px] font-semibold">Friday Bridge digest</div>

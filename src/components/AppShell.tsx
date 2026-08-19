@@ -61,7 +61,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       </a>
 
       {/* Side rail — desktop */}
-      <nav aria-label="Primary" className="sticky top-0 hidden h-dvh w-56 shrink-0 flex-col gap-1 border-r border-bloom-line bg-bloom-cream px-3 py-5 md:flex lg:w-64">
+      <nav aria-label="Primary sidebar" className="sticky top-0 hidden h-dvh w-56 shrink-0 flex-col gap-1 border-r border-bloom-line bg-bloom-cream px-3 py-5 md:flex lg:w-64">
         <div className="mb-5 flex items-center gap-2.5 px-2">
           <BloomLogo size={30} />
           <div>

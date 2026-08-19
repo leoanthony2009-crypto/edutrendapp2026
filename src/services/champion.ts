@@ -1,4 +1,4 @@
-import type { ChampionAlert, OneChildEntry, TriageLabel } from '../types/survey'
+import type { ChampionAlert, ChampionOutcome, OneChildEntry, TriageLabel, WatchlistAction } from '../types/survey'
 import type { SynodalMark } from '../types/synodal'
 import { storage } from './storage'
 
@@ -11,12 +11,122 @@ import { storage } from './storage'
  */
 const ALERTS_KEY = 'championAlerts'
 const ONE_CHILD_KEY = 'oneChildEntries'
+const WATCHLIST_ACTIONS_KEY = 'watchlistActions'
 export const SCHOOL_ID = 'tt-pos-stjoseph-rc'
 
 const DAY_MS = 86_400_000
+const HOUR_MS = 3_600_000
+
+/**
+ * DEMO SEED — a small realistic queue so the Champion workspace is
+ * demonstrable before local activity accumulates. Real deployments start
+ * from the server-side queue; these seeds live only in the local store.
+ */
+function seedAlerts(now: Date = new Date()): ChampionAlert[] {
+  const at = (hoursAgo: number) => new Date(now.getTime() - hoursAgo * HOUR_MS)
+  const mk = (id: string, hoursAgo: number, partial: Partial<ChampionAlert>): ChampionAlert => ({
+    id,
+    schoolId: SCHOOL_ID,
+    triggeredAt: at(hoursAgo).toISOString(),
+    triggerType: 'free_text',
+    context: '',
+    marks: ['L'],
+    status: 'open',
+    readByDeadline: new Date(at(hoursAgo).getTime() + 24 * HOUR_MS).toISOString(),
+    ...partial,
+  })
+  return [
+    mk('seed-alert-pattern', 20, {
+      triggerType: 'pattern',
+      pupilHandle: 'F2-073',
+      context: 'F2-073 noted by 3 staff across 4 days.',
+      marks: ['D'],
+    }),
+    mk('seed-alert-freetext', 6, {
+      triggerType: 'free_text',
+      context: 'A pupil in my form seems withdrawn since Monday and skipped lunch twice this week.',
+      marks: ['L', 'D'],
+    }),
+    mk('seed-alert-reviewed', 30, {
+      triggerType: 'safeguarding',
+      context: 'Please keep an eye on the back corridor at first break.',
+      status: 'reviewed',
+      championReadBy: 'champion-demo',
+    }),
+  ]
+}
+
+function seedOneChild(now: Date = new Date()): OneChildEntry[] {
+  const entry = (staff: string, daysAgo: number, notedFor: string): OneChildEntry => ({
+    pupilHandle: 'F2-073',
+    yearGroup: 'F2',
+    notedFor,
+    submittedBy: staff,
+    submittedAt: new Date(now.getTime() - daysAgo * DAY_MS).toISOString(),
+  })
+  return [
+    entry('teacher-mp', 1, 'quiet all day, sat alone at lunch'),
+    entry('teacher-rk', 2, 'homework missing again, seemed tired'),
+    entry('teacher-sd', 4, 'flinched when asked about home'),
+  ]
+}
 
 export function listAlerts(): ChampionAlert[] {
-  return storage.get<ChampionAlert[]>(ALERTS_KEY, [])
+  return storage.get<ChampionAlert[]>(ALERTS_KEY, seedAlerts())
+}
+
+/** Inbox order: open first by SLA remaining (soonest deadline first), then closed by recency. */
+export function triagedAlerts(now: Date = new Date()): ChampionAlert[] {
+  void now
+  const open = listAlerts().filter((a) => a.status === 'open')
+  const closed = listAlerts().filter((a) => a.status !== 'open')
+  open.sort((a, b) => Date.parse(a.readByDeadline) - Date.parse(b.readByDeadline))
+  closed.sort((a, b) => Date.parse(b.triggeredAt) - Date.parse(a.triggeredAt))
+  return [...open, ...closed]
+}
+
+export function acknowledgeAlert(id: string, championId: string): void {
+  storage.set(
+    ALERTS_KEY,
+    listAlerts().map((a) => (a.id === id && a.status === 'open' ? { ...a, status: 'reviewed' as const, championReadBy: championId } : a))
+  )
+}
+
+/**
+ * Closing an alert requires a structured outcome (council protocol Seat 4.2).
+ * The outcome note stays in the Champion workspace — it is never included in
+ * any export, digest or rollup. Throws if the note is missing.
+ */
+export function closeAlert(id: string, championId: string, outcome: ChampionOutcome, note: string): void {
+  if (!note.trim()) throw new Error('An outcome note is required to close an alert')
+  storage.set(
+    ALERTS_KEY,
+    listAlerts().map((a) =>
+      a.id === id
+        ? {
+            ...a,
+            status: 'actioned' as const,
+            championReadBy: a.championReadBy ?? championId,
+            outcome,
+            outcomeNote: note.trim(),
+            closedAt: new Date().toISOString(),
+          }
+        : a
+    )
+  )
+}
+
+/** Hours until (positive) or past (negative) the 24h read deadline. */
+export function slaHoursRemaining(alert: ChampionAlert, now: Date = new Date()): number {
+  return (Date.parse(alert.readByDeadline) - now.getTime()) / HOUR_MS
+}
+
+export function watchlistActions(): Record<string, WatchlistAction> {
+  return storage.get<Record<string, WatchlistAction>>(WATCHLIST_ACTIONS_KEY, {})
+}
+
+export function setWatchlistAction(pupilHandle: string, action: WatchlistAction): void {
+  storage.set(WATCHLIST_ACTIONS_KEY, { ...watchlistActions(), [pupilHandle]: action })
 }
 
 export function queueAlert(input: {
@@ -47,7 +157,7 @@ export function shouldTriageAlert(label: TriageLabel): boolean {
 }
 
 export function listOneChildEntries(): OneChildEntry[] {
-  return storage.get<OneChildEntry[]>(ONE_CHILD_KEY, [])
+  return storage.get<OneChildEntry[]>(ONE_CHILD_KEY, seedOneChild())
 }
 
 export function addOneChildEntry(entry: OneChildEntry): void {

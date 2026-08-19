@@ -68,7 +68,15 @@ export interface ChampionAlert {
   status: 'open' | 'reviewed' | 'actioned'
   championReadBy?: string // teacher ID of Champion who has acknowledged
   readByDeadline: string // submittedAt + 24h
+  /** Structured close-out. Stays in the Champion workspace — never exported. */
+  outcome?: ChampionOutcome
+  outcomeNote?: string
+  closedAt?: string
 }
+
+export type ChampionOutcome = 'spoke_with_pupil' | 'parent_contact' | 'safeguarding_referral' | 'no_further_action'
+
+export type WatchlistAction = 'Reviewed' | 'Parent contact' | 'Safeguarding'
 
 export type SurveyAudience = 'My class' | 'Whole school' | 'Staff'
 export type SurveyStatus = 'live' | 'paused' | 'closed'

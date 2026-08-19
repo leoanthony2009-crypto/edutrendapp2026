@@ -8,8 +8,9 @@ import { SurveyBuilderPromoCard, WorthNoticingCard } from '../components/cards'
 import { TellALeaderSheet } from '../components/TellALeaderSheet'
 import { useLoaded } from '../hooks/useLoaded'
 import { collatedToday, LESSONS_DISTRIBUTION, PULSE_7D, SEED_WATCHLIST_NOTE, UNHEARD_COHORTS } from '../data/demoAggregates'
-import { watchlist } from '../services/champion'
+import { listAlerts, watchlist } from '../services/champion'
 import { pickFallbackMove } from '../services/poui'
+import { Link } from 'react-router-dom'
 
 const POUI_GPT_URL = 'https://chatgpt.com/g/g-696d4b9b682c8191b00cce3da28a61bc-bloom-gpt-1-0'
 
@@ -165,35 +166,45 @@ function PouiMicroMoveCard() {
   )
 }
 
-function WatchlistCard({ leader = false }: { leader?: boolean }) {
+function WatchlistCard() {
   const rows = watchlist()
   return (
     <DarkCard>
-      <MicroLabel className="text-mark-selfemptying">{leader ? 'Champion watchlist' : 'One Child · Watchlist'}</MicroLabel>
+      <MicroLabel className="text-mark-selfemptying">One Child · Watchlist</MicroLabel>
       {rows.length > 0 ? (
         <ul className="mt-1.5 space-y-1.5">
           {rows.slice(0, 3).map((r) => (
             <li key={r.pupilHandle} className="text-[13px] leading-snug">
-              <b>{r.pupilHandle}</b> noted by {r.staff} staff across {r.days} days.
-              {leader ? '' : ' Your Champion reads within 24 hours.'}
+              <b>{r.pupilHandle}</b> noted by {r.staff} staff across {r.days} days. Your Champion reads within 24 hours.
             </li>
           ))}
         </ul>
       ) : (
         <p className="mt-1.5 text-[13px] leading-relaxed">
-          {leader ? (
-            <>
-              <b>3 pupils</b> on the watchlist · 1 new this week · all acknowledged within 24h.
-            </>
-          ) : (
-            <>
-              <b>{SEED_WATCHLIST_NOTE.handle}</b> noted by {SEED_WATCHLIST_NOTE.staff} staff across {SEED_WATCHLIST_NOTE.days}{' '}
-              days. Your Champion reads within 24 hours.
-            </>
-          )}
+          <b>{SEED_WATCHLIST_NOTE.handle}</b> noted by {SEED_WATCHLIST_NOTE.staff} staff across {SEED_WATCHLIST_NOTE.days}{' '}
+          days. Your Champion reads within 24 hours.
         </p>
       )}
     </DarkCard>
+  )
+}
+
+/** Leader entry into the Champion workspace (FIX 1) with live queue counts. */
+function ChampionWorkspaceCard() {
+  const alerts = listAlerts()
+  const open = alerts.filter((a) => a.status === 'open').length
+  const rows = watchlist()
+  return (
+    <Link to="/champion" className="block rounded-card bg-bloom-charcoal p-4 text-on-dark transition-transform duration-150 hover:scale-[1.01]">
+      <MicroLabel className="text-mark-selfemptying">Champion workspace</MicroLabel>
+      <p className="mt-1.5 text-[13px] leading-relaxed">
+        <b>
+          {open} alert{open === 1 ? '' : 's'}
+        </b>{' '}
+        awaiting your read · <b>{rows.length}</b> on the watchlist. Every voice read within 24 hours.
+      </p>
+      <span className="mt-2 inline-block text-[11.5px] font-extrabold text-bloom-gold-bright">Open workspace →</span>
+    </Link>
   )
 }
 
@@ -300,7 +311,7 @@ function TodayLeader() {
           />
         </div>
         <div className="space-y-3">
-          <WatchlistCard leader />
+          <ChampionWorkspaceCard />
           <GoldCard>
             <MicroLabel className="text-ink-gold">One small change to test tomorrow</MicroLabel>
             <p className="mt-1.5 text-[13.5px] leading-relaxed text-[#4A4636] italic">
