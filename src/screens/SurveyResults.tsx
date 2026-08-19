@@ -101,8 +101,9 @@ export function SurveyResults() {
                       </div>
                     ))}
                   </div>
-                  <table className="sr-only">
-                    <caption>{q.text} — responses by option</caption>
+                  <div className="sr-only">
+                    <table>
+                      <caption>{q.text} — responses by option</caption>
                     <thead>
                       <tr>
                         <th scope="col">Option</th>
@@ -110,16 +111,17 @@ export function SurveyResults() {
                         <th scope="col">Share</th>
                       </tr>
                     </thead>
-                    <tbody>
-                      {q.options!.map((o) => (
-                        <tr key={o.label}>
-                          <td>{o.label}</td>
-                          <td>{o.count}</td>
-                          <td>{o.pct}%</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      <tbody>
+                        {q.options!.map((o) => (
+                          <tr key={o.label}>
+                            <td>{o.label}</td>
+                            <td>{o.count}</td>
+                            <td>{o.pct}%</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </>
               ) : q.quotesSuppressed ? (
                 <p className="mt-2 text-[12.5px] text-ink-meta">Gathering — individual answers appear at {data.kAnon} voices.</p>

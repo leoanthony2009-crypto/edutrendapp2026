@@ -36,6 +36,17 @@ describe('authentication', () => {
     expect((await s.api('GET', '/api/auth/me', { token })).status).toBe(401)
   })
 
+  it('rate-limits repeated failed logins (brute-force guard)', async () => {
+    let last
+    for (let i = 0; i < 11; i++) {
+      last = await s.api('POST', '/api/auth/login', { body: { schoolCode: 'STJ', userCode: 's29', passcode: `wrong-${i}` } })
+    }
+    expect(last.status).toBe(429)
+    // and the correct passcode is also refused while locked out
+    const locked = await s.api('POST', '/api/auth/login', { body: { schoolCode: 'STJ', userCode: 's29', passcode: 'petal-s29' } })
+    expect(locked.status).toBe(429)
+  })
+
   it('rejects state-changing requests without the client header (CSRF guard)', async () => {
     const res = await fetch(`${s.baseUrl}/api/auth/login`, {
       method: 'POST',

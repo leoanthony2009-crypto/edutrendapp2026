@@ -75,17 +75,36 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  // Bootstrap the session once on mount.
+  // Bootstrap the session once on mount. The cookie is httpOnly, so a
+  // non-sensitive hint flag avoids probing /me (and logging a 401) when no
+  // session can exist on this browser.
   useEffect(() => {
     let cancelled = false
     ;(async () => {
+      const mayHaveSession =
+        (typeof globalThis.__BLOOM_API_BASE__ === 'string' && globalThis.__BLOOM_API_BASE__ !== '') ||
+        (() => {
+          try {
+            return window.localStorage.getItem('bloom:hasSession') === 'true'
+          } catch {
+            return true
+          }
+        })()
       try {
+        if (!mayHaveSession) return
         const { me: user } = await Api.me()
         if (cancelled) return
         setMe(user)
         await loadToday(user)
       } catch {
-        if (!cancelled) setMe(null)
+        if (!cancelled) {
+          setMe(null)
+          try {
+            window.localStorage.removeItem('bloom:hasSession')
+          } catch {
+            /* ignore */
+          }
+        }
       } finally {
         if (!cancelled) setAuthReady(true)
       }
@@ -99,6 +118,11 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     async (schoolCode: string, userCode: string, passcode: string) => {
       const { me: user, token } = await Api.login(schoolCode, userCode, passcode)
       setBearer(token)
+      try {
+        window.localStorage.setItem('bloom:hasSession', 'true')
+      } catch {
+        /* ignore */
+      }
       setMe(user)
       await loadToday(user)
     },
@@ -112,6 +136,11 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
       /* session may already be gone */
     }
     setBearer(null)
+    try {
+      window.localStorage.removeItem('bloom:hasSession')
+    } catch {
+      /* ignore */
+    }
     setMe(null)
     setToday(null)
     setDrafts({})

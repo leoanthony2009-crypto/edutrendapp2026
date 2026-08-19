@@ -56,8 +56,20 @@ export function createApp(db, { deliveryAdapter } = {}) {
 
   /* ── Auth ── */
 
+  // Brute-force guard: 10 failed attempts per account per 15 minutes.
+  const failedLogins = new Map()
+  const LOGIN_WINDOW_MS = 15 * 60_000
+  const LOGIN_MAX_FAILS = 10
+
   app.post('/api/auth/login', (req, res) => {
     const { schoolCode, userCode, passcode } = req.body ?? {}
+    const key = `${String(schoolCode ?? '').toUpperCase()}/${String(userCode ?? '').toLowerCase()}`
+    const now = Date.now()
+    const attempts = (failedLogins.get(key) ?? []).filter((t) => now - t < LOGIN_WINDOW_MS)
+    if (attempts.length >= LOGIN_MAX_FAILS) {
+      failedLogins.set(key, attempts)
+      return res.status(429).json({ error: 'too_many_attempts' })
+    }
     const user = db
       .prepare(
         `SELECT u.*, s.code AS school_code FROM users u JOIN schools s ON s.id = u.school_id
@@ -65,8 +77,10 @@ export function createApp(db, { deliveryAdapter } = {}) {
       )
       .get(String(schoolCode ?? '').toUpperCase(), String(userCode ?? '').toLowerCase())
     if (!user || !verifyPass(passcode, user.pass_hash)) {
+      failedLogins.set(key, [...attempts, now])
       return res.status(401).json({ error: 'invalid_credentials' })
     }
+    failedLogins.delete(key)
     const { token, expiresAt } = createSession(db, user.id)
     res.setHeader('Set-Cookie', sessionCookie(token, expiresAt))
     const me = currentUser(db, { headers: { authorization: `Bearer ${token}` } })
