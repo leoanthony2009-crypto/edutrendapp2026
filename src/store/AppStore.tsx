@@ -1,315 +1,204 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react'
-import type {
-  LaunchedSurvey,
-  MicroMove,
-  OneChildEntry,
-  PulseQuestion,
-  PulseRun,
-  Role,
-  SurveyAudience,
-  SurveyDraftQuestion,
-  SurveyStatus,
-} from '../types/survey'
-import { DEFAULT_BANKS } from '../data/questionBanks'
-import { storage } from '../services/storage'
-import { activeQuestions, todayISO } from '../services/rotation'
-import { collateScore } from '../services/scoring'
-import { triageFreeText } from '../services/triage'
-import { generateMicroMove } from '../services/poui'
-import { addOneChildEntry, queueAlert, shouldTriageAlert } from '../services/champion'
-
-export interface Account {
-  name: string
-  role: Role
-}
-
-interface Drafts {
-  date: string
-  values: Record<string, number | string>
-}
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import type { Me, TodayBundle } from '../types/api'
+import { Api, setBearer } from '../services/api'
 
 /**
- * DEMO SEED — mirrors the prototype so the unlock journey is demonstrable in
- * one session (teacher is 1 pulse from the 10-pulse Survey Builder unlock).
- * The counter's real source of truth moves server-side per user
- * (DESIGN_REVIEW P2.11); this seed lives only in the local demo store.
+ * Server-backed app store. The server session — never client state — is the
+ * source of identity, role and Champion capability (audit P0-1). This store
+ * holds only: the bootstrapped identity, today's pulse bundle, and the
+ * in-progress answer drafts.
+ *
+ * Drafts live in sessionStorage (cleared when the tab closes) so a mid-run
+ * refresh keeps answers without persisting potentially sensitive free text
+ * in durable browser storage (audit P0-2).
  */
-const SEED_PULSES_COMPLETED: Record<Role, number> = { student: 0, teacher: 9, leader: 12 }
-
-const SEED_SURVEYS: LaunchedSurvey[] = [
-  {
-    id: 'seed-survey-1',
-    ownerRole: 'leader',
-    title: 'Break-time supervision check',
-    audience: 'Whole school',
-    questions: [
-      { id: 'sq1', text: 'Do you feel safe at break time?', options: ['Yes', 'Mostly', 'Not really', 'No'] },
-      { id: 'sq2', text: 'Where do you spend most of break?', options: ['Yard', 'Corridor', 'Classroom', 'Library'] },
-      { id: 'sq3', text: 'Is an adult easy to find at break?', options: ['Yes', 'Sometimes', 'No'] },
-      { id: 'sq4', text: 'Anything about break time adults should know?', options: null },
-    ],
-    responses: 23,
-    status: 'live',
-    launchedAt: '2026-08-10T09:00:00.000Z',
-  },
-]
 
 interface AppStore {
-  // auth / role (DESIGN_REVIEW P1.7 — role from sign-in, not a demo cycler)
-  account: Account | null
-  signIn: (account: Account) => void
-  signOut: () => void
+  authReady: boolean
+  me: Me | null
+  login: (schoolCode: string, userCode: string, passcode: string) => Promise<void>
+  logout: () => Promise<void>
+
   splashSeen: boolean
   markSplashSeen: () => void
 
-  // question banks
-  banks: Record<Role, PulseQuestion[]>
-  updateBank: (role: Role, bank: PulseQuestion[]) => void
-  resetBank: (role: Role) => void
+  today: TodayBundle | null
+  todayError: string | null
+  refreshToday: () => Promise<void>
 
-  // today's carousel
-  todaysQuestions: (role: Role) => PulseQuestion[]
   drafts: Record<string, number | string>
   setDraft: (questionId: string, value: number | string) => void
   clearDrafts: () => void
-  runs: PulseRun[]
-  todayRun: (role: Role) => PulseRun | undefined
-  submitRun: (role: Role) => PulseRun
-
-  // unlock + builder
-  pulsesCompleted: Record<Role, number>
-  surveys: LaunchedSurvey[]
-  launchSurvey: (ownerRole: Role, title: string, audience: SurveyAudience, questions: SurveyDraftQuestion[]) => void
-  setSurveyStatus: (id: string, status: SurveyStatus) => void
-  deleteSurvey: (id: string) => void
-
-  // POUI micro-move
-  microMove: MicroMove | null
-  moveTried: boolean
-  moveSaved: boolean
-  toggleTried: () => void
-  toggleSaved: () => void
-
-  // One Child + safeguarding
-  submitOneChild: (entry: OneChildEntry) => void
-  tellALeader: (note: string) => void
-
-  // preferences
-  bridgeDigest: boolean
-  toggleBridgeDigest: () => void
-  feedbackSent: boolean
-  sendFeedback: () => void
+  submitRun: () => Promise<TodayBundle>
+  microMoveAction: (patch: { tried?: boolean; saved?: boolean }) => Promise<void>
 }
 
 const Ctx = createContext<AppStore | null>(null)
 
-function usePersisted<T>(key: string, initial: T): [T, (next: T | ((prev: T) => T)) => void] {
-  const [value, setValue] = useState<T>(() => storage.get<T>(key, initial))
-  const set = useCallback(
-    (next: T | ((prev: T) => T)) => {
-      setValue((prev) => {
-        const resolved = typeof next === 'function' ? (next as (p: T) => T)(prev) : next
-        storage.set(key, resolved)
-        return resolved
-      })
-    },
-    [key]
-  )
-  return [value, set]
+function draftsKey(me: Me | null, date: string | undefined) {
+  return me && date ? `bloom:drafts:${me.id}:${date}` : null
 }
 
-export function AppStoreProvider({ children, now }: { children: ReactNode; now?: () => Date }) {
-  const today = todayISO(now?.())
+function readDrafts(key: string | null): Record<string, number | string> {
+  if (!key) return {}
+  try {
+    return JSON.parse(window.sessionStorage.getItem(key) ?? '{}')
+  } catch {
+    return {}
+  }
+}
 
-  const [account, setAccount] = usePersisted<Account | null>('account', null)
-  const [splashSeen, setSplashSeen] = usePersisted<boolean>('splashSeen', false)
-  const [banks, setBanks] = usePersisted<Record<Role, PulseQuestion[]>>('banks', DEFAULT_BANKS)
-  const [draftState, setDraftState] = usePersisted<Drafts>('drafts', { date: today, values: {} })
-  const [runs, setRuns] = usePersisted<PulseRun[]>('runs', [])
-  const [pulsesCompleted, setPulsesCompleted] = usePersisted<Record<Role, number>>(
-    'pulsesCompleted',
-    SEED_PULSES_COMPLETED
+export function AppStoreProvider({ children }: { children: ReactNode }) {
+  const [authReady, setAuthReady] = useState(false)
+  const [me, setMe] = useState<Me | null>(null)
+  const [today, setToday] = useState<TodayBundle | null>(null)
+  const [todayError, setTodayError] = useState<string | null>(null)
+  const [drafts, setDrafts] = useState<Record<string, number | string>>({})
+  const [splashSeen, setSplashSeen] = useState<boolean>(() => {
+    try {
+      return window.localStorage.getItem('bloom:v1:splashSeen') === 'true'
+    } catch {
+      return true
+    }
+  })
+
+  const loadToday = useCallback(async (who: Me) => {
+    try {
+      const bundle = await Api.pulseToday()
+      setToday(bundle)
+      setTodayError(null)
+      setDrafts(readDrafts(draftsKey(who, bundle.date)))
+    } catch (err) {
+      setToday(null)
+      setTodayError(err instanceof Error ? err.message : 'request_failed')
+    }
+  }, [])
+
+  // Bootstrap the session once on mount.
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      try {
+        const { me: user } = await Api.me()
+        if (cancelled) return
+        setMe(user)
+        await loadToday(user)
+      } catch {
+        if (!cancelled) setMe(null)
+      } finally {
+        if (!cancelled) setAuthReady(true)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [loadToday])
+
+  const login = useCallback(
+    async (schoolCode: string, userCode: string, passcode: string) => {
+      const { me: user, token } = await Api.login(schoolCode, userCode, passcode)
+      setBearer(token)
+      setMe(user)
+      await loadToday(user)
+    },
+    [loadToday]
   )
-  const [surveys, setSurveys] = usePersisted<LaunchedSurvey[]>('surveys', SEED_SURVEYS)
-  const [microMove, setMicroMove] = usePersisted<MicroMove | null>('microMove', null)
-  const [moveTried, setMoveTried] = usePersisted<boolean>('moveTried', false)
-  const [moveSaved, setMoveSaved] = usePersisted<boolean>('moveSaved', false)
-  const [bridgeDigest, setBridgeDigest] = usePersisted<boolean>('bridgeDigest', true)
-  const [feedbackSent, setFeedbackSent] = usePersisted<boolean>('feedbackSent', false)
 
-  // Drafts are per-day: a stale draft from yesterday never leaks into today.
-  const drafts = draftState.date === today ? draftState.values : {}
-
-  const todaysQuestions = useCallback(
-    (role: Role) => activeQuestions(role, banks[role], today),
-    [banks, today]
-  )
-
-  const todayRun = useCallback(
-    (role: Role) => runs.find((r) => r.role === role && r.date === today),
-    [runs, today]
-  )
+  const logout = useCallback(async () => {
+    try {
+      await Api.logout()
+    } catch {
+      /* session may already be gone */
+    }
+    setBearer(null)
+    setMe(null)
+    setToday(null)
+    setDrafts({})
+  }, [])
 
   const setDraft = useCallback(
     (questionId: string, value: number | string) => {
-      setDraftState((prev) => ({
-        date: today,
-        values: { ...(prev.date === today ? prev.values : {}), [questionId]: value },
-      }))
+      setDrafts((prev) => {
+        const next = { ...prev, [questionId]: value }
+        const key = draftsKey(me, today?.date)
+        if (key) {
+          try {
+            window.sessionStorage.setItem(key, JSON.stringify(next))
+          } catch {
+            /* storage full/blocked — drafts stay in memory */
+          }
+        }
+        return next
+      })
     },
-    [setDraftState, today]
+    [me, today?.date]
   )
 
-  const clearDrafts = useCallback(() => setDraftState({ date: today, values: {} }), [setDraftState, today])
+  const clearDrafts = useCallback(() => {
+    const key = draftsKey(me, today?.date)
+    if (key) {
+      try {
+        window.sessionStorage.removeItem(key)
+      } catch {
+        /* ignore */
+      }
+    }
+    setDrafts({})
+  }, [me, today?.date])
 
-  const submitRun = useCallback(
-    (role: Role): PulseRun => {
-      const questions = todaysQuestions(role)
-      const score = collateScore(questions, drafts)
-      const submittedAt = new Date().toISOString()
-      const run: PulseRun = {
-        id: `run-${role}-${today}`,
-        role,
-        date: today,
-        score,
-        submittedAt,
-        responses: questions
-          .filter((q) => drafts[q.id] !== undefined && drafts[q.id] !== '')
-          .map((q) => ({ questionId: q.id, value: drafts[q.id], mark: q.mark, submittedAt })),
-      }
-      // Once per day: resubmitting replaces today's run instead of stacking.
-      const isResubmit = runs.some((r) => r.role === role && r.date === today)
-      setRuns((prev) => [...prev.filter((r) => !(r.role === role && r.date === today)), run])
-      if (!isResubmit && role !== 'student') {
-        setPulsesCompleted((prev) => ({ ...prev, [role]: (prev[role] ?? 0) + 1 }))
-      }
+  const submitRun = useCallback(async () => {
+    const bundle = await Api.pulseSubmit(drafts)
+    setToday(bundle)
+    return bundle
+  }, [drafts])
 
-      // Champion routing (spec § 4.2/4.3) — free text on flagged questions
-      // always alerts; other free text alerts when triage says concerned+.
-      for (const q of questions) {
-        const value = drafts[q.id]
-        if (typeof value !== 'string' || !value.trim()) continue
-        if (q.triggersChampion) {
-          queueAlert({ triggerType: 'free_text', context: value, marks: [q.mark] })
-        } else {
-          void triageFreeText(value).then((label) => {
-            if (shouldTriageAlert(label)) queueAlert({ triggerType: 'free_text', context: value, marks: [q.mark] })
-          })
-        }
-      }
-
-      // POUI micro-move for teachers (spec § 5) — replaces the "Daily Read".
-      if (role === 'teacher') {
-        const freeText = questions
-          .filter((q) => typeof drafts[q.id] === 'string' && String(drafts[q.id]).trim())
-          .map((q) => String(drafts[q.id]))
-          .join(' ')
-        void triageFreeText(freeText).then((triageLabel) =>
-          generateMicroMove({
-            responses: questions
-              .filter((q) => drafts[q.id] !== undefined && drafts[q.id] !== '')
-              .map((q) => ({
-                question: q.text,
-                answer:
-                  typeof drafts[q.id] === 'number' ? (q.options?.[drafts[q.id] as number] ?? '') : String(drafts[q.id]),
-                mark: q.mark,
-                domain: q.domain,
-              })),
-            triageLabel,
-            termContext: 'T1 week 2, new school year settling in',
-          }).then((move) => {
-            setMicroMove(move)
-            setMoveTried(false)
-            setMoveSaved(false)
-          })
-        )
-      }
-      return run
+  const microMoveAction = useCallback(
+    async (patch: { tried?: boolean; saved?: boolean }) => {
+      await Api.microMove(patch)
+      setToday((prev) =>
+        prev?.microMove
+          ? {
+              ...prev,
+              microMove: {
+                ...prev.microMove,
+                tried: patch.tried ?? prev.microMove.tried,
+                saved: patch.saved ?? prev.microMove.saved,
+              },
+            }
+          : prev
+      )
     },
-    [drafts, runs, setMicroMove, setMoveSaved, setMoveTried, setPulsesCompleted, setRuns, today, todaysQuestions]
+    []
   )
 
   const store = useMemo<AppStore>(
     () => ({
-      account,
-      signIn: (a) => setAccount(a),
-      signOut: () => setAccount(null),
+      authReady,
+      me,
+      login,
+      logout,
       splashSeen,
-      markSplashSeen: () => setSplashSeen(true),
-      banks,
-      updateBank: (role, bank) => setBanks((prev) => ({ ...prev, [role]: bank })),
-      resetBank: (role) => setBanks((prev) => ({ ...prev, [role]: DEFAULT_BANKS[role] })),
-      todaysQuestions,
+      markSplashSeen: () => {
+        setSplashSeen(true)
+        try {
+          window.localStorage.setItem('bloom:v1:splashSeen', 'true')
+        } catch {
+          /* ignore */
+        }
+      },
+      today,
+      todayError,
+      refreshToday: async () => {
+        if (me) await loadToday(me)
+      },
       drafts,
       setDraft,
       clearDrafts,
-      runs,
-      todayRun,
       submitRun,
-      pulsesCompleted,
-      surveys,
-      launchSurvey: (ownerRole, title, audience, questions) =>
-        setSurveys((prev) => [
-          {
-            id: `survey-${Date.now()}`,
-            ownerRole,
-            title,
-            audience,
-            questions,
-            responses: 0,
-            status: 'live' as const,
-            launchedAt: new Date().toISOString(),
-          },
-          ...prev,
-        ]),
-      setSurveyStatus: (id, status) => setSurveys((prev) => prev.map((s) => (s.id === id ? { ...s, status } : s))),
-      deleteSurvey: (id) => setSurveys((prev) => prev.filter((s) => s.id !== id)),
-      microMove,
-      moveTried,
-      moveSaved,
-      toggleTried: () => setMoveTried((v) => !v),
-      toggleSaved: () => setMoveSaved((v) => !v),
-      submitOneChild: (entry) => addOneChildEntry(entry),
-      tellALeader: (note) =>
-        queueAlert({
-          triggerType: 'safeguarding',
-          context: note.trim() || 'Safeguarding channel opened without a note.',
-          marks: ['L'],
-        }),
-      bridgeDigest,
-      toggleBridgeDigest: () => setBridgeDigest((v) => !v),
-      feedbackSent,
-      sendFeedback: () => setFeedbackSent(true),
+      microMoveAction,
     }),
-    [
-      account,
-      banks,
-      bridgeDigest,
-      clearDrafts,
-      drafts,
-      feedbackSent,
-      microMove,
-      moveSaved,
-      moveTried,
-      pulsesCompleted,
-      runs,
-      setAccount,
-      setBanks,
-      setBridgeDigest,
-      setFeedbackSent,
-      setMicroMove,
-      setMoveSaved,
-      setMoveTried,
-      setSplashSeen,
-      setSurveys,
-      splashSeen,
-      submitRun,
-      surveys,
-      setDraft,
-      todayRun,
-      todaysQuestions,
-    ]
+    [authReady, me, login, logout, splashSeen, today, todayError, drafts, setDraft, clearDrafts, submitRun, microMoveAction, loadToday]
   )
 
   return <Ctx.Provider value={store}>{children}</Ctx.Provider>
@@ -319,4 +208,11 @@ export function useAppStore(): AppStore {
   const ctx = useContext(Ctx)
   if (!ctx) throw new Error('useAppStore must be used inside AppStoreProvider')
   return ctx
+}
+
+/** Convenience for screens that render only when signed in. */
+export function useMe(): Me {
+  const { me } = useAppStore()
+  if (!me) throw new Error('useMe outside an authenticated tree')
+  return me
 }

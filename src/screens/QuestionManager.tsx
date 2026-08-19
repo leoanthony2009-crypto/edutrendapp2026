@@ -1,42 +1,61 @@
-import { Link, Navigate } from 'react-router-dom'
-import { ChevronLeft, X } from 'lucide-react'
 import { useState } from 'react'
-import type { PulseQuestion, Role } from '../types/survey'
-import { useAppStore } from '../store/AppStore'
-import { PageHeader, ScreenSkeleton, ThemeBadge } from '../components/ui'
-import { useLoaded } from '../hooks/useLoaded'
+import { Link } from 'react-router-dom'
+import { ChevronLeft, X } from 'lucide-react'
+import type { ApiQuestion } from '../types/api'
+import { Api } from '../services/api'
+import { useApi } from '../hooks/useApi'
+import { useMe } from '../store/AppStore'
+import { ErrorState, PageHeader, ScreenSkeleton, ThemeBadge } from '../components/ui'
+import { PermissionDenied } from '../App'
 
 const DEFAULT_OPTIONS = ['Yes', 'Mostly', 'Not really', 'No']
 
+/** Question manager — banks live on the school server, edits apply instantly. */
 export function QuestionManager() {
-  const store = useAppStore()
-  const loaded = useLoaded()
-  const role = store.account!.role
-  const [tab, setTab] = useState<Role>(role === 'student' ? 'student' : role)
+  const me = useMe()
+  const [tab, setTab] = useState<'own' | 'student'>('own')
   const [nextId, setNextId] = useState(1)
+  const [saveError, setSaveError] = useState(false)
+  const role = me.role
+  const bankRole = tab === 'student' ? 'student' : role
+  const { data, error, loading, reload, setData } = useApi(
+    () => (role === 'student' ? Promise.resolve(null) : Api.bank(bankRole)),
+    [bankRole, role]
+  )
 
-  // Students never manage question banks — role gating, not just hidden UI.
-  if (role === 'student') return <Navigate to="/today" replace />
-  if (!loaded) return <ScreenSkeleton />
+  if (role === 'student') return <PermissionDenied need="Question banks are managed by teachers and leaders." />
+  if (loading) return <ScreenSkeleton />
+  if (error || !data) return <ErrorState body="The question bank could not be loaded." onRetry={reload} />
 
-  const bank = store.banks[tab]
+  const bank = data.bank
 
-  const update = (idx: number, patch: Partial<PulseQuestion>) => {
-    const copy = bank.slice()
-    copy[idx] = { ...copy[idx], ...patch }
-    store.updateBank(tab, copy)
+  const save = async (nextBank: ApiQuestion[]) => {
+    setData({ role: bankRole, bank: nextBank })
+    setSaveError(false)
+    try {
+      await Api.saveBank(bankRole, nextBank)
+    } catch {
+      setSaveError(true)
+      reload()
+    }
   }
 
-  const tabs: Array<{ key: Role; label: string }> = [
-    { key: role, label: role === 'leader' ? 'Leader Pulse' : 'Daily Pulse' },
-    { key: 'student', label: 'Pupil carousel' },
+  const update = (idx: number, patch: Partial<ApiQuestion>) => {
+    const copy = bank.slice()
+    copy[idx] = { ...copy[idx], ...patch }
+    void save(copy)
+  }
+
+  const tabs = [
+    { key: 'own' as const, label: role === 'leader' ? 'Leader Pulse' : 'Daily Pulse' },
+    { key: 'student' as const, label: 'Pupil carousel' },
   ]
 
   return (
     <div className="mx-auto max-w-xl pb-4">
       <PageHeader
         title={role === 'leader' ? 'Leader Pulse questions' : 'Carousel questions'}
-        sub="Changes update the carousel instantly"
+        sub="Changes save to the school server and update the carousel instantly"
         back={
           <Link to="/pulse" aria-label="Back to pulse" className="grid min-h-11 min-w-11 place-items-center text-ink-meta hover:text-ink">
             <ChevronLeft aria-hidden="true" className="h-5 w-5" />
@@ -60,6 +79,12 @@ export function QuestionManager() {
         ))}
       </div>
 
+      {saveError ? (
+        <p role="alert" className="mx-4 mt-3 rounded-input bg-bloom-gold-tint px-3.5 py-2.5 text-xs font-semibold text-ink-gold md:mx-0">
+          That change could not be saved — the bank has been reloaded from the server.
+        </p>
+      ) : null}
+
       <div className="flex flex-col gap-2 px-4 pt-3.5 md:px-0">
         {bank.length === 0 ? (
           <p className="rounded-row border border-bloom-line bg-white p-4 text-center text-[12.5px] text-ink-meta">
@@ -72,12 +97,7 @@ export function QuestionManager() {
               <ThemeBadge theme={q.theme} />
               <button
                 onClick={() =>
-                  update(
-                    idx,
-                    q.options
-                      ? { options: undefined, type: 'free_text', scale: false }
-                      : { options: DEFAULT_OPTIONS, type: 'single_select', scale: false }
-                  )
+                  update(idx, q.options ? { options: undefined, type: 'free_text', scale: false } : { options: DEFAULT_OPTIONS, type: 'single_select', scale: false })
                 }
                 className="min-h-11 rounded-full bg-bloom-gold-chip px-3 py-1 text-[10px] font-bold text-ink-gold transition-colors hover:bg-bloom-gold-line"
                 aria-label={`Change question type — currently ${q.options ? `choice with ${q.options.length} options` : 'free text'}`}
@@ -86,7 +106,7 @@ export function QuestionManager() {
               </button>
               {q.weekly ? <span className="text-[10px] text-ink-meta">weekly</span> : null}
               <button
-                onClick={() => store.updateBank(tab, bank.filter((_, j) => j !== idx))}
+                onClick={() => void save(bank.filter((_, j) => j !== idx))}
                 aria-label={`Remove question: ${q.text}`}
                 className="ml-auto grid min-h-11 min-w-11 place-items-center rounded-full text-ink-meta transition-colors hover:bg-bloom-cream-dim hover:text-signal-concern"
               >
@@ -102,18 +122,16 @@ export function QuestionManager() {
               onChange={(e) => update(idx, { text: e.target.value })}
               className="mt-2 w-full rounded-[9px] border border-bloom-sand bg-[#FDFBF4] px-2.5 py-2 text-[13px] outline-none focus:border-bloom-green"
             />
-            <p className="mt-1.5 text-[10.5px] text-ink-meta">
-              {q.options ? q.options.join(' / ') : 'Open response — optional for pupils'}
-            </p>
+            <p className="mt-1.5 text-[10.5px] text-ink-meta">{q.options ? q.options.join(' / ') : 'Open response — optional for pupils'}</p>
           </div>
         ))}
         <button
           onClick={() => {
-            store.updateBank(tab, [
+            void save([
               ...bank,
               {
-                id: `custom-${tab}-${Date.now()}-${nextId}`,
-                theme: tab === 'leader' ? 'Action' : 'Voice',
+                id: `custom-${bankRole}-${Date.now()}-${nextId}`,
+                theme: bankRole === 'leader' ? 'Action' : 'Voice',
                 domain: 'wellness',
                 type: 'single_select',
                 text: 'New question — tap to edit',
@@ -131,7 +149,7 @@ export function QuestionManager() {
         <p className="px-1 pb-4 text-[11px] leading-relaxed text-ink-meta">
           {tab === 'student'
             ? 'Bloom rotates 3–5 questions per pupil per day from this bank; the reflection question appears weekly. Tap the type chip to switch choice / free text.'
-            : tab === 'leader'
+            : role === 'leader'
               ? 'Five decision-oriented questions, weekly. Tap the type chip to switch choice / free text.'
               : 'Your two-minute Daily Pulse. Every question carries a Synodal Mark. Tap the type chip to switch choice / free text.'}
         </p>

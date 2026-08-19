@@ -14,15 +14,16 @@ export async function startServer({ now } = {}) {
   const baseUrl = `http://127.0.0.1:${server.address().port}`
 
   const api = async (method, path, { token, body } = {}) => {
-    const res = await fetch(baseUrl + path, {
+    const init = {
       method,
       headers: {
         'content-type': 'application/json',
         'x-bloom-client': '1',
         ...(token ? { authorization: `Bearer ${token}` } : {}),
       },
-      body: body === undefined ? undefined : JSON.stringify(body),
-    })
+    }
+    if (body !== undefined && method !== 'GET') init.body = JSON.stringify(body)
+    const res = await fetch(baseUrl + path, init)
     let json = null
     try {
       json = await res.json()

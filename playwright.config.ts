@@ -17,6 +17,12 @@ export default defineConfig({
   },
   webServer: [
     {
+      command: 'node server/index.mjs',
+      url: 'http://127.0.0.1:8787/api/health',
+      reuseExistingServer: false,
+      env: { BLOOM_DB: ':memory:', BLOOM_SEED: '1', BLOOM_TEST: '1', PORT: '8787', NODE_ENV: 'test' },
+    },
+    {
       command: 'npm run preview -- --port 4173 --strictPort',
       url: 'http://localhost:4173',
       reuseExistingServer: true,

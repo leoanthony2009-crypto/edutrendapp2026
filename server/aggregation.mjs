@@ -19,8 +19,6 @@ export function suppressCell(cellN, totalN) {
   return false
 }
 
-const DAY_MS = 86_400_000
-
 /** The eight Bloom pastoral domains ← student question themes. */
 export const DOMAIN_MAP = {
   'Safety & peers': ['Safety', 'Peer treatment'],

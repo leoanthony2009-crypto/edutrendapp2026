@@ -1,7 +1,7 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react'
 import { CloudOff, Flower2 } from 'lucide-react'
 import { SYNODAL_MARKS, type SynodalMark } from '../types/synodal'
-import { THEME_COLORS } from '../data/questionBanks'
+import { THEME_COLORS } from '../data/themes'
 
 /* ── Cards ─────────────────────────────────────────────────────────────── */
 

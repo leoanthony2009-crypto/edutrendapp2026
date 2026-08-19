@@ -1,23 +1,13 @@
-import { useCallback, useState } from 'react'
-import { Link, Navigate } from 'react-router-dom'
-import { ChevronLeft, MessageCircle, Repeat2, ShieldQuestion } from 'lucide-react'
-import type { ChampionAlert, ChampionOutcome, WatchlistAction } from '../types/survey'
-import {
-  acknowledgeAlert,
-  closeAlert,
-  listOneChildEntries,
-  setWatchlistAction,
-  slaHoursRemaining,
-  triagedAlerts,
-  watchlist,
-  watchlistActions,
-} from '../services/champion'
+import { useState } from 'react'
+import { Link } from 'react-router-dom'
+import { ChevronLeft, History, MessageCircle, Repeat2, ShieldQuestion } from 'lucide-react'
+import type { AlertEvent, ApiAlert, WatchlistRow } from '../types/api'
+import { Api } from '../services/api'
+import { useApi } from '../hooks/useApi'
 import { useAppStore } from '../store/AppStore'
 import { useRovingRadio } from '../hooks/useRovingRadio'
-import { Card, MarkBadge, PageHeader, PrivacyNote, ScreenSkeleton, StatusBadge } from '../components/ui'
-import { useLoaded } from '../hooks/useLoaded'
-
-const CHAMPION_ID = 'champion-demo'
+import { Card, ErrorState, MarkBadge, PageHeader, PrivacyNote, ScreenSkeleton, StatusBadge } from '../components/ui'
+import { PermissionDenied } from '../App'
 
 const TRIGGER_META = {
   free_text: { label: 'Pulse free text', icon: MessageCircle },
@@ -25,61 +15,63 @@ const TRIGGER_META = {
   pattern: { label: 'Pattern · One Child', icon: Repeat2 },
 } as const
 
-const OUTCOMES: Array<{ value: ChampionOutcome; label: string }> = [
+const OUTCOMES = [
   { value: 'spoke_with_pupil', label: 'Spoke with pupil' },
   { value: 'parent_contact', label: 'Parent contact' },
   { value: 'safeguarding_referral', label: 'Safeguarding referral' },
   { value: 'no_further_action', label: 'No further action' },
 ]
 
-const WATCHLIST_ACTIONS: WatchlistAction[] = ['Reviewed', 'Parent contact', 'Safeguarding']
+const WATCHLIST_ACTIONS = ['Reviewed', 'Parent contact', 'Safeguarding']
 
-function WatchlistActionChips({
-  pupilHandle,
-  selected,
-  onSelect,
-}: {
-  pupilHandle: string
-  selected: WatchlistAction | undefined
-  onSelect: (action: WatchlistAction) => void
-}) {
-  const { itemProps } = useRovingRadio(WATCHLIST_ACTIONS.length, selected ? WATCHLIST_ACTIONS.indexOf(selected) : -1, (i) =>
-    onSelect(WATCHLIST_ACTIONS[i])
-  )
-  return (
-    <fieldset className="mt-2.5">
-      <legend className="micro-label text-ink-meta">Champion action</legend>
-      <div className="mt-1.5 flex flex-wrap gap-1.5" role="radiogroup" aria-label={`Champion action for ${pupilHandle}`}>
-        {WATCHLIST_ACTIONS.map((action, i) => (
-          <button
-            key={action}
-            {...itemProps(i)}
-            className={`min-h-11 rounded-full border-[1.5px] px-3.5 py-1.5 text-[11.5px] font-bold transition-colors duration-150 ${
-              selected === action
-                ? 'border-bloom-green bg-bloom-green text-on-dark'
-                : 'border-bloom-line-strong bg-white text-ink-soft hover:border-bloom-green'
-            }`}
-          >
-            {action}
-          </button>
-        ))}
-      </div>
-    </fieldset>
-  )
+function slaHoursRemaining(alert: ApiAlert): number {
+  return (Date.parse(alert.readByDeadline) - Date.now()) / 3_600_000
 }
 
-/** Calm SLA phrasing — informative, never alarm-styled (council Seat 4). */
-function slaLabel(alert: ChampionAlert): string {
+function slaLabel(alert: ApiAlert): string {
   if (alert.status !== 'open') return alert.status === 'reviewed' ? 'Acknowledged' : 'Closed'
   const h = slaHoursRemaining(alert)
   if (h >= 1) return `Read within ${Math.ceil(h)}h`
   if (h >= 0) return 'Read within the hour'
-  return `${Math.ceil(-h)}h past the 24h read window`
+  return 'Overdue read'
 }
 
-function AlertRow({ alert, onChange }: { alert: ChampionAlert; onChange: () => void }) {
+/** Open first by SLA remaining, then handled by recency (council Seat 4.1). */
+function triage(alerts: ApiAlert[]): ApiAlert[] {
+  const open = alerts.filter((a) => a.status === 'open').sort((a, b) => Date.parse(a.readByDeadline) - Date.parse(b.readByDeadline))
+  const closed = alerts.filter((a) => a.status !== 'open').sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt))
+  return [...open, ...closed]
+}
+
+function AuditTrail({ alertId }: { alertId: string }) {
+  const { data, loading } = useApi(() => Api.alertEvents(alertId), [alertId])
+  if (loading) return <p className="mt-2 text-[11px] text-ink-meta">Loading history…</p>
+  const LABELS: Record<string, string> = {
+    created: 'Alert created',
+    assigned: 'Assigned to Champion',
+    viewed: 'Opened by Champion',
+    acknowledged: 'Marked as read',
+    disposition: 'Outcome recorded',
+    note_recorded: 'Note recorded',
+    closed: 'Closed',
+    escalated: 'Escalated — 24h window passed',
+  }
+  return (
+    <ol className="mt-2 flex flex-col gap-1 border-l-2 border-bloom-sand pl-3">
+      {(data?.events ?? []).map((e: AlertEvent, i) => (
+        <li key={i} className="text-[11px] text-ink-soft">
+          <span className="font-bold">{LABELS[e.type] ?? e.type}</span>
+          <span className="text-ink-meta"> · {new Date(e.at).toLocaleString([], { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })}</span>
+        </li>
+      ))}
+    </ol>
+  )
+}
+
+function AlertRow({ alert, onChange }: { alert: ApiAlert; onChange: () => void }) {
   const [closing, setClosing] = useState(false)
-  const [outcome, setOutcome] = useState<ChampionOutcome>('spoke_with_pupil')
+  const [showHistory, setShowHistory] = useState(false)
+  const [outcome, setOutcome] = useState('spoke_with_pupil')
   const [note, setNote] = useState('')
   const [noteError, setNoteError] = useState(false)
   const meta = TRIGGER_META[alert.triggerType]
@@ -87,8 +79,16 @@ function AlertRow({ alert, onChange }: { alert: ChampionAlert; onChange: () => v
   const open = alert.status === 'open'
   const overdue = open && slaHoursRemaining(alert) < 0
 
+  // Spec state styling (FIX 1): open = gold border; overdue = burgundy left
+  // border + "overdue read" label. Calm, never alarm-red.
+  const borderClass = overdue
+    ? 'border-bloom-line border-l-4 border-l-ink-burgundy'
+    : open
+      ? 'border-bloom-gold'
+      : 'border-bloom-line'
+
   return (
-    <li className="rounded-row border border-bloom-line bg-white px-3.5 py-3">
+    <li className={`rounded-row border bg-white px-3.5 py-3 ${borderClass}`}>
       <div className="flex flex-wrap items-center gap-2">
         <span className="inline-flex items-center gap-1.5 rounded-full bg-bloom-cream-dim px-2.5 py-1 text-[10.5px] font-bold text-ink-soft">
           <Icon aria-hidden="true" className="h-3 w-3" /> {meta.label}
@@ -99,6 +99,7 @@ function AlertRow({ alert, onChange }: { alert: ChampionAlert; onChange: () => v
         ))}
         <span className={`ml-auto text-[10.5px] font-bold ${overdue ? 'text-ink-burgundy' : open ? 'text-ink-gold' : 'text-ink-meta'}`}>
           {slaLabel(alert)}
+          {alert.escalatedAt ? ' · leadership notified' : ''}
         </span>
       </div>
       <p className="mt-2 text-[13px] leading-relaxed text-[#4A4636]">{alert.context}</p>
@@ -110,46 +111,46 @@ function AlertRow({ alert, onChange }: { alert: ChampionAlert; onChange: () => v
         </p>
       ) : null}
 
-      {open && !closing ? (
-        <div className="mt-2.5 flex flex-wrap gap-2">
+      <div className="mt-2.5 flex flex-wrap gap-2">
+        {open ? (
           <button
-            onClick={() => {
-              acknowledgeAlert(alert.id, CHAMPION_ID)
+            onClick={async () => {
+              await Api.alertRead(alert.id)
               onChange()
             }}
-            className="min-h-10 rounded-[10px] bg-bloom-green px-3.5 py-2 text-[11.5px] font-bold text-on-dark transition-colors hover:bg-bloom-green-deep"
+            className="min-h-11 rounded-[10px] bg-bloom-green px-3.5 py-2 text-[11.5px] font-bold text-on-dark transition-colors hover:bg-bloom-green-deep"
           >
             Mark as read
           </button>
+        ) : null}
+        {alert.status !== 'actioned' && !closing ? (
           <button
             onClick={() => setClosing(true)}
-            className="min-h-10 rounded-[10px] border border-bloom-line-strong px-3.5 py-2 text-[11.5px] font-bold text-ink-soft transition-colors hover:border-bloom-green"
+            className="min-h-11 rounded-[10px] border border-bloom-line-strong px-3.5 py-2 text-[11.5px] font-bold text-ink-soft transition-colors hover:border-bloom-green"
           >
             Log an outcome…
           </button>
-        </div>
-      ) : null}
-      {alert.status === 'reviewed' && !closing ? (
-        <div className="mt-2.5">
-          <button
-            onClick={() => setClosing(true)}
-            className="min-h-10 rounded-[10px] border border-bloom-line-strong px-3.5 py-2 text-[11.5px] font-bold text-ink-soft transition-colors hover:border-bloom-green"
-          >
-            Log an outcome…
-          </button>
-        </div>
-      ) : null}
+        ) : null}
+        <button
+          onClick={() => setShowHistory((v) => !v)}
+          aria-expanded={showHistory}
+          className="inline-flex min-h-11 items-center gap-1 rounded-[10px] px-2.5 text-[11px] font-bold text-ink-meta transition-colors hover:text-ink"
+        >
+          <History aria-hidden="true" className="h-3.5 w-3.5" /> History
+        </button>
+      </div>
+      {showHistory ? <AuditTrail alertId={alert.id} /> : null}
 
       {closing ? (
         <form
           className="mt-2.5 rounded-[12px] border border-bloom-gold-line bg-bloom-gold-tint p-3"
-          onSubmit={(e) => {
+          onSubmit={async (e) => {
             e.preventDefault()
             if (!note.trim()) {
               setNoteError(true)
               return
             }
-            closeAlert(alert.id, CHAMPION_ID, outcome, note)
+            await Api.alertClose(alert.id, outcome, note)
             setClosing(false)
             onChange()
           }}
@@ -160,7 +161,7 @@ function AlertRow({ alert, onChange }: { alert: ChampionAlert; onChange: () => v
           <select
             id={`outcome-${alert.id}`}
             value={outcome}
-            onChange={(e) => setOutcome(e.target.value as ChampionOutcome)}
+            onChange={(e) => setOutcome(e.target.value)}
             className="mt-1.5 w-full rounded-[9px] border border-bloom-line-strong bg-white px-2.5 py-2.5 text-[13px] outline-none focus:border-bloom-green"
           >
             {OUTCOMES.map((o) => (
@@ -191,17 +192,10 @@ function AlertRow({ alert, onChange }: { alert: ChampionAlert; onChange: () => v
             </p>
           ) : null}
           <div className="mt-2 flex gap-2">
-            <button
-              type="submit"
-              className="min-h-10 rounded-[10px] bg-bloom-charcoal px-3.5 py-2 text-[11.5px] font-bold text-on-dark transition-colors hover:bg-black"
-            >
+            <button type="submit" className="min-h-11 rounded-[10px] bg-bloom-charcoal px-3.5 py-2 text-[11.5px] font-bold text-on-dark transition-colors hover:bg-black">
               Close alert
             </button>
-            <button
-              type="button"
-              onClick={() => setClosing(false)}
-              className="min-h-10 px-2 text-[11.5px] font-bold text-ink-meta underline underline-offset-2"
-            >
+            <button type="button" onClick={() => setClosing(false)} className="min-h-11 px-2 text-[11.5px] font-bold text-ink-meta underline underline-offset-2">
               Cancel
             </button>
           </div>
@@ -211,27 +205,58 @@ function AlertRow({ alert, onChange }: { alert: ChampionAlert; onChange: () => v
   )
 }
 
+function WatchlistActionChips({
+  row,
+  onSelect,
+}: {
+  row: WatchlistRow
+  onSelect: (action: string) => void
+}) {
+  const selected = row.action
+  const { itemProps } = useRovingRadio(WATCHLIST_ACTIONS.length, selected ? WATCHLIST_ACTIONS.indexOf(selected) : -1, (i) =>
+    onSelect(WATCHLIST_ACTIONS[i])
+  )
+  return (
+    <fieldset className="mt-2.5">
+      <legend className="micro-label text-ink-meta">Champion action</legend>
+      <div className="mt-1.5 flex flex-wrap gap-1.5" role="radiogroup" aria-label={`Champion action for ${row.pupilHandle}`}>
+        {WATCHLIST_ACTIONS.map((action, i) => (
+          <button
+            key={action}
+            {...itemProps(i)}
+            className={`min-h-11 rounded-full border-[1.5px] px-3.5 py-1.5 text-[11.5px] font-bold transition-colors duration-150 ${
+              selected === action
+                ? 'border-bloom-green bg-bloom-green text-on-dark'
+                : 'border-bloom-line-strong bg-white text-ink-soft hover:border-bloom-green'
+            }`}
+          >
+            {action}
+          </button>
+        ))}
+      </div>
+    </fieldset>
+  )
+}
+
 /**
- * FIX 1 — Champion workspace (spec § 3.4/4.2; council protocol Seat 4).
- * Only the school's Pastoral Champion (leader) can open it. Alerts triage by
- * SLA remaining, closing requires a structured outcome note, and nothing here
- * frames a falling alert count as "improvement".
+ * Champion workspace — server-backed (Gate 1). Access requires the session's
+ * isChampion capability; alerts, watchlist, outcome notes and the audit trail
+ * all live on the server, never in browser storage.
  */
 export function ChampionWorkspace() {
-  const store = useAppStore()
-  const loaded = useLoaded()
-  const [, setVersion] = useState(0)
-  const refresh = useCallback(() => setVersion((v) => v + 1), [])
+  const { me } = useAppStore()
+  const isChampion = me?.isChampion ?? false
+  const { data, error, loading, reload } = useApi(() => (isChampion ? Api.championOverview() : Promise.resolve(null)), [isChampion])
 
-  const role = store.account!.role
-  if (role !== 'leader') return <Navigate to="/today" replace />
-  if (!loaded) return <ScreenSkeleton />
+  if (!isChampion) {
+    return <PermissionDenied need="The Champion workspace is only for your school's Pastoral Champion." />
+  }
+  if (loading) return <ScreenSkeleton />
+  if (error || !data) return <ErrorState body="The Champion queue could not be loaded." onRetry={reload} />
 
-  const alerts = triagedAlerts()
+  const alerts = triage(data.alerts)
   const open = alerts.filter((a) => a.status === 'open')
   const closed = alerts.filter((a) => a.status !== 'open')
-  const rows = watchlist(listOneChildEntries())
-  const actions = watchlistActions()
 
   return (
     <div className="mx-auto max-w-2xl space-y-3 pb-4">
@@ -247,14 +272,14 @@ export function ChampionWorkspace() {
 
       <div className="space-y-3 px-4 md:px-0">
         <PrivacyNote>
-          <b>Only you see this.</b> Alert text and your outcome notes stay in this workspace — they never appear in
-          exports, digests or Trends. Pupils are handles, never names.
+          <b>Only you see this.</b> Alert text and your outcome notes stay in this workspace on the school server — they
+          never appear in exports, digests, Trends or on this device. Pupils are handles, never names.
         </PrivacyNote>
 
         <section aria-label="Alerts">
           <div className="flex items-baseline justify-between">
             <h2 className="font-display text-[17px] font-bold">Alerts</h2>
-            <span className="text-[11px] text-ink-meta">
+            <span aria-live="polite" className="text-[11px] text-ink-meta">
               {open.length} awaiting your read · {closed.length} handled
             </span>
           </div>
@@ -265,7 +290,7 @@ export function ChampionWorkspace() {
           ) : (
             <ul className="mt-2 flex flex-col gap-2">
               {alerts.map((a) => (
-                <AlertRow key={a.id} alert={a} onChange={refresh} />
+                <AlertRow key={a.id} alert={a} onChange={reload} />
               ))}
             </ul>
           )}
@@ -276,11 +301,11 @@ export function ChampionWorkspace() {
           <p className="mt-0.5 text-[11.5px] text-ink-meta">
             Pupils noted in two or more pulses across three or more days in the past fortnight.
           </p>
-          {rows.length === 0 ? (
+          {data.watchlist.length === 0 ? (
             <Card className="mt-2 text-center text-[12.5px] text-ink-meta">No pupils currently meet the watchlist threshold.</Card>
           ) : (
             <ul className="mt-2 flex flex-col gap-2">
-              {rows.map((r) => (
+              {data.watchlist.map((r) => (
                 <li key={r.pupilHandle} className="rounded-row border border-bloom-line bg-white px-3.5 py-3">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="font-display text-[15px] font-extrabold">{r.pupilHandle}</span>
@@ -290,15 +315,14 @@ export function ChampionWorkspace() {
                     {r.marks.map((m) => (
                       <MarkBadge key={m} mark={m} />
                     ))}
-                    {actions[r.pupilHandle] ? <StatusBadge tone="gold">{actions[r.pupilHandle]}</StatusBadge> : null}
+                    {r.action ? <StatusBadge tone="gold">{r.action}</StatusBadge> : null}
                   </div>
                   {r.pattern ? <p className="mt-1.5 text-xs leading-relaxed text-ink-soft">{r.pattern}</p> : null}
                   <WatchlistActionChips
-                    pupilHandle={r.pupilHandle}
-                    selected={actions[r.pupilHandle]}
-                    onSelect={(action) => {
-                      setWatchlistAction(r.pupilHandle, action)
-                      refresh()
+                    row={r}
+                    onSelect={async (action) => {
+                      await Api.watchlistAction(r.pupilHandle, action)
+                      reload()
                     }}
                   />
                 </li>
@@ -308,8 +332,8 @@ export function ChampionWorkspace() {
         </section>
 
         <p className="pb-4 text-[11px] leading-relaxed text-ink-meta">
-          A quiet week and a busy week are both just weeks — fewer alerts is not a score, and more is not a failure.
-          What matters is that every voice was read within 24 hours.
+          A quiet week and a busy week are both just weeks — fewer alerts is not a score, and more is not a failure. What
+          matters is that every voice was read within 24 hours.
         </p>
       </div>
     </div>

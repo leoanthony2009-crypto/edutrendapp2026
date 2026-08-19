@@ -5,7 +5,6 @@ import {
   createSession,
   currentUser,
   destroySession,
-  hashPass,
   requireAuth,
   requireChampion,
   requireRole,

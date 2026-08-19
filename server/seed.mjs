@@ -124,8 +124,8 @@ export function seed(db, now = new Date()) {
   }
 
   // Holy Cross — small school, stays under the 20-voice threshold
-  const hcrLeader = mkUser(hcr, 'leader', { name: 'Fr. B. Alexis', code: 'leader', handle: 'Principal', isChampion: true })
-  const hcrTeacher = mkUser(hcr, 'teacher', { name: 'C. Mohammed', code: 'teacher', handle: 'Standard 4' })
+  mkUser(hcr, 'leader', { name: 'Fr. B. Alexis', code: 'leader', handle: 'Principal', isChampion: true })
+  mkUser(hcr, 'teacher', { name: 'C. Mohammed', code: 'teacher', handle: 'Standard 4' })
   const hcrStudents = []
   for (let i = 1; i <= 6; i++) {
     hcrStudents.push(mkUser(hcr, 'student', { name: `Pupil S4-${i}`, code: `s${i}`, handle: `S4-0${i}`, yearTier: 'junior' }))
@@ -142,7 +142,7 @@ export function seed(db, now = new Date()) {
   // Historic runs — 10 school days. Teacher M. Persaud gets exactly 9 runs so
   // the 10-pulse Survey Builder unlock is one pulse away (demoable), computed
   // from real rows rather than a seeded counter.
-  const days = pastWeekdays(stj.timezone, 10, now)
+  const days = pastWeekdays(stj.timezone, 12, now)
   const today = schoolDay(stj.timezone, now)
   for (const [di, date] of days.entries()) {
     if (date === today) continue // today's activity belongs to real users
@@ -154,6 +154,8 @@ export function seed(db, now = new Date()) {
       seedRun(db, stj, { ...teacher, role: 'teacher' }, date, lcg(hashCode(teacher.id + date)))
     }
     if (di % 2 === 0) seedRun(db, stj, { ...teacher2, role: 'teacher' }, date, lcg(hashCode(teacher2.id + date)))
+    // Leader has a long-standing habit — builder unlocked from day one (demo)
+    seedRun(db, stj, { ...leader, role: 'leader' }, date, lcg(hashCode(leader.id + date)))
     for (const s of hcrStudents) {
       const rand = lcg(hashCode(s.id + date))
       if (rand() < 0.7) seedRun(db, hcr, s, date, rand)
