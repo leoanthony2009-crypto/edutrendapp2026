@@ -9,28 +9,33 @@ import type { PulseQuestion, Role } from '../types/survey'
  */
 export const PREFER_NOT_TO_SAY = 'Prefer not to say'
 
+/**
+ * Badge backgrounds carry white text, so these are the deep variants of the
+ * Synodal/theme hues — every pair measures ≥4.5:1 with white (audit P1-1).
+ * Bars/fills elsewhere keep the brighter palette.
+ */
 export const THEME_COLORS: Record<string, string> = {
   Safety: '#6E2B2F',
-  Belonging: '#8E6FB6',
+  Belonging: '#6E5494',
   'Trusted adult': '#295C4D',
-  Voice: '#C8A951',
-  Fairness: '#4A8AD0',
+  Voice: '#8A7325',
+  Fairness: '#2F5F96',
   'Peer treatment': '#6E2B2F',
-  Stress: '#8E6FB6',
-  Learning: '#5BAA70',
-  Attendance: '#4A8AD0',
+  Stress: '#6E5494',
+  Learning: '#3D7A50',
+  Attendance: '#2F5F96',
   Home: '#6F6A58',
-  Participation: '#C8A951',
+  Participation: '#8A7325',
   Agency: '#295C4D',
-  R: '#C8A951',
-  L: '#4A8AD0',
-  D: '#5BAA70',
-  SE: '#8E6FB6',
+  R: '#8A7325',
+  L: '#2F5F96',
+  D: '#3D7A50',
+  SE: '#6E5494',
   Attention: '#295C4D',
-  Visibility: '#4A8AD0',
-  Response: '#5BAA70',
-  Barriers: '#8E6FB6',
-  Action: '#C8A951',
+  Visibility: '#2F5F96',
+  Response: '#3D7A50',
+  Barriers: '#6E5494',
+  Action: '#8A7325',
 }
 
 export const STUDENT_QUESTIONS: PulseQuestion[] = [

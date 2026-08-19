@@ -54,7 +54,7 @@ export function Trends() {
             aria-selected={range === key}
             onClick={() => setRange(key)}
             className={`min-h-10 flex-1 rounded-[10px] py-2 text-[12.5px] font-bold transition-colors duration-150 ${
-              range === key ? 'bg-white text-ink' : 'text-ink-meta hover:text-ink'
+              range === key ? 'bg-white text-ink' : 'text-ink-soft hover:text-ink'
             }`}
           >
             {RANGES[key].label}
@@ -68,7 +68,7 @@ export function Trends() {
           <p className="mt-0.5 text-[11px] text-ink-meta">{RANGES[range].caption} · includes today's collated pulses</p>
           <div className="mt-2.5 h-40 md:h-56" aria-hidden="true">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: -26 }}>
+              <AreaChart accessibilityLayer={false} data={data} margin={{ top: 8, right: 8, bottom: 0, left: -26 }}>
                 <CartesianGrid stroke="#F3EFE2" vertical={false} />
                 <XAxis dataKey="label" tick={{ fontSize: 10, fill: '#6F6A58' }} tickLine={false} axisLine={{ stroke: '#EDE6D3' }} interval="preserveStartEnd" />
                 <YAxis domain={[40, 100]} tick={{ fontSize: 10, fill: '#6F6A58' }} tickLine={false} axisLine={false} />
@@ -151,7 +151,7 @@ export function Trends() {
                   <span
                     aria-hidden="true"
                     className="text-[11px] font-bold"
-                    style={{ color: d.delta > 0 ? '#417E52' : d.delta < 0 ? '#B04A38' : '#6F6A58' }}
+                    style={{ color: d.delta > 0 ? '#417E52' : d.delta < 0 ? '#A03E2D' : '#6F6A58' }}
                   >
                     {d.delta > 0 ? '▲' : d.delta < 0 ? '▼' : '·'}
                     {Math.abs(d.delta)}

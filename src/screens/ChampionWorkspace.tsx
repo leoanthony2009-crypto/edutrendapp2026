@@ -13,6 +13,7 @@ import {
   watchlistActions,
 } from '../services/champion'
 import { useAppStore } from '../store/AppStore'
+import { useRovingRadio } from '../hooks/useRovingRadio'
 import { Card, MarkBadge, PageHeader, PrivacyNote, ScreenSkeleton, StatusBadge } from '../components/ui'
 import { useLoaded } from '../hooks/useLoaded'
 
@@ -32,6 +33,40 @@ const OUTCOMES: Array<{ value: ChampionOutcome; label: string }> = [
 ]
 
 const WATCHLIST_ACTIONS: WatchlistAction[] = ['Reviewed', 'Parent contact', 'Safeguarding']
+
+function WatchlistActionChips({
+  pupilHandle,
+  selected,
+  onSelect,
+}: {
+  pupilHandle: string
+  selected: WatchlistAction | undefined
+  onSelect: (action: WatchlistAction) => void
+}) {
+  const { itemProps } = useRovingRadio(WATCHLIST_ACTIONS.length, selected ? WATCHLIST_ACTIONS.indexOf(selected) : -1, (i) =>
+    onSelect(WATCHLIST_ACTIONS[i])
+  )
+  return (
+    <fieldset className="mt-2.5">
+      <legend className="micro-label text-ink-meta">Champion action</legend>
+      <div className="mt-1.5 flex flex-wrap gap-1.5" role="radiogroup" aria-label={`Champion action for ${pupilHandle}`}>
+        {WATCHLIST_ACTIONS.map((action, i) => (
+          <button
+            key={action}
+            {...itemProps(i)}
+            className={`min-h-11 rounded-full border-[1.5px] px-3.5 py-1.5 text-[11.5px] font-bold transition-colors duration-150 ${
+              selected === action
+                ? 'border-bloom-green bg-bloom-green text-on-dark'
+                : 'border-bloom-line-strong bg-white text-ink-soft hover:border-bloom-green'
+            }`}
+          >
+            {action}
+          </button>
+        ))}
+      </div>
+    </fieldset>
+  )
+}
 
 /** Calm SLA phrasing — informative, never alarm-styled (council Seat 4). */
 function slaLabel(alert: ChampionAlert): string {
@@ -258,32 +293,14 @@ export function ChampionWorkspace() {
                     {actions[r.pupilHandle] ? <StatusBadge tone="gold">{actions[r.pupilHandle]}</StatusBadge> : null}
                   </div>
                   {r.pattern ? <p className="mt-1.5 text-xs leading-relaxed text-ink-soft">{r.pattern}</p> : null}
-                  <fieldset className="mt-2.5">
-                    <legend className="micro-label text-ink-meta">Champion action</legend>
-                    <div className="mt-1.5 flex flex-wrap gap-1.5" role="radiogroup" aria-label={`Champion action for ${r.pupilHandle}`}>
-                      {WATCHLIST_ACTIONS.map((action) => {
-                        const selected = actions[r.pupilHandle] === action
-                        return (
-                          <button
-                            key={action}
-                            role="radio"
-                            aria-checked={selected}
-                            onClick={() => {
-                              setWatchlistAction(r.pupilHandle, action)
-                              refresh()
-                            }}
-                            className={`min-h-10 rounded-full border-[1.5px] px-3 py-1.5 text-[11.5px] font-bold transition-colors duration-150 ${
-                              selected
-                                ? 'border-bloom-green bg-bloom-green text-on-dark'
-                                : 'border-bloom-line-strong bg-white text-ink-soft hover:border-bloom-green'
-                            }`}
-                          >
-                            {action}
-                          </button>
-                        )
-                      })}
-                    </div>
-                  </fieldset>
+                  <WatchlistActionChips
+                    pupilHandle={r.pupilHandle}
+                    selected={actions[r.pupilHandle]}
+                    onSelect={(action) => {
+                      setWatchlistAction(r.pupilHandle, action)
+                      refresh()
+                    }}
+                  />
                 </li>
               ))}
             </ul>

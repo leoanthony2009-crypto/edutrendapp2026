@@ -61,7 +61,7 @@ function TodayStudent() {
             <div className="text-[11px] text-ink-meta">days in a row your voice was heard</div>
           </Card>
           <Card className="flex-1 !p-3.5">
-            <div className="font-display text-[22px] font-extrabold text-bloom-gold">2 min</div>
+            <div className="font-display text-[22px] font-extrabold text-ink-gold">2 min</div>
             <div className="text-[11px] text-ink-meta">is all it takes — {count} questions today</div>
           </Card>
         </div>
@@ -95,7 +95,7 @@ function PulseScoreCard({ forLeader = false }: { forLeader?: boolean }) {
   return (
     <GreenCard className="relative overflow-hidden">
       <span aria-hidden="true" className="absolute -top-5 -right-5 h-24 w-24 rounded-full bg-bloom-gold-bright/12" />
-      <MicroLabel className="text-bloom-gold">Pastoral Pulse · {state}</MicroLabel>
+      <MicroLabel className="text-bloom-gold-soft">Pastoral Pulse · {state}</MicroLabel>
       <div className="mt-1.5 flex items-baseline gap-2">
         <span className="font-display text-[40px] font-extrabold text-bloom-gold-bright">{today}</span>
         <span className="text-xs text-on-dark-soft">
@@ -170,7 +170,7 @@ function WatchlistCard() {
   const rows = watchlist()
   return (
     <DarkCard>
-      <MicroLabel className="text-mark-selfemptying">One Child · Watchlist</MicroLabel>
+      <MicroLabel className="text-mark-selfemptying-soft">One Child · Watchlist</MicroLabel>
       {rows.length > 0 ? (
         <ul className="mt-1.5 space-y-1.5">
           {rows.slice(0, 3).map((r) => (
@@ -196,7 +196,7 @@ function ChampionWorkspaceCard() {
   const rows = watchlist()
   return (
     <Link to="/champion" className="block rounded-card bg-bloom-charcoal p-4 text-on-dark transition-transform duration-150 hover:scale-[1.01]">
-      <MicroLabel className="text-mark-selfemptying">Champion workspace</MicroLabel>
+      <MicroLabel className="text-mark-selfemptying-soft">Champion workspace</MicroLabel>
       <p className="mt-1.5 text-[13px] leading-relaxed">
         <b>
           {open} alert{open === 1 ? '' : 's'}
@@ -225,7 +225,7 @@ function TodayTeacher() {
               <span
                 title="Learning"
                 aria-label="Theme: Learning"
-                className="flex-none self-start rounded-md bg-signal-good px-1.5 py-1 text-[10px] font-extrabold text-white"
+                className="flex-none self-start rounded-md bg-mark-discerning-deep px-1.5 py-1 text-[10px] font-extrabold text-white"
               >
                 L
               </span>

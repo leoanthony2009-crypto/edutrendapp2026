@@ -34,7 +34,7 @@ export function Profile() {
       <PageHeader title="Profile" sub={`${SCHOOL_NAME} · ${ROLE_CHIP[role]}`} />
       <div className="flex flex-col gap-2 px-4 md:max-w-xl md:px-0">
         <div className="flex items-center gap-3 rounded-[16px] border border-bloom-line bg-white px-4 py-3.5">
-          <span aria-hidden="true" className="grid h-10 w-10 place-items-center rounded-full bg-bloom-green font-display text-[15px] font-extrabold text-bloom-gold-bright">
+          <span aria-hidden="true" className="grid h-10 w-10 place-items-center rounded-full bg-bloom-green font-display text-[19px] font-extrabold text-bloom-gold-bright">
             {me.init}
           </span>
           <div>
@@ -93,7 +93,9 @@ export function Profile() {
         ) : null}
 
         <button onClick={store.sendFeedback} className={rowClass} disabled={store.feedbackSent}>
-          <span className="text-[13.5px] font-semibold">{store.feedbackSent ? 'Feedback sent — thank you ✓' : 'Send feedback'}</span>
+          <span aria-live="polite" className="text-[13.5px] font-semibold">
+            {store.feedbackSent ? 'Feedback sent — thank you ✓' : 'Send feedback'}
+          </span>
           {store.feedbackSent ? null : <ChevronRight aria-hidden="true" className="h-4 w-4 text-ink-meta" />}
         </button>
 

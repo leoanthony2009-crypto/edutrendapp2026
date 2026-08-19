@@ -52,7 +52,7 @@ export function QuestionManager() {
             aria-selected={tab === t.key}
             onClick={() => setTab(t.key)}
             className={`min-h-10 flex-1 rounded-[10px] py-2 text-[12.5px] font-bold transition-colors duration-150 ${
-              tab === t.key ? 'bg-white text-ink' : 'text-ink-meta hover:text-ink'
+              tab === t.key ? 'bg-white text-ink' : 'text-ink-soft hover:text-ink'
             }`}
           >
             {t.label}
@@ -79,7 +79,7 @@ export function QuestionManager() {
                       : { options: DEFAULT_OPTIONS, type: 'single_select', scale: false }
                   )
                 }
-                className="min-h-8 rounded-full bg-bloom-gold-chip px-2.5 py-1 text-[10px] font-bold text-ink-gold transition-colors hover:bg-bloom-gold-line"
+                className="min-h-11 rounded-full bg-bloom-gold-chip px-3 py-1 text-[10px] font-bold text-ink-gold transition-colors hover:bg-bloom-gold-line"
                 aria-label={`Change question type — currently ${q.options ? `choice with ${q.options.length} options` : 'free text'}`}
               >
                 {q.options ? `Choice · ${q.options.length}` : 'Free text'}
@@ -88,7 +88,7 @@ export function QuestionManager() {
               <button
                 onClick={() => store.updateBank(tab, bank.filter((_, j) => j !== idx))}
                 aria-label={`Remove question: ${q.text}`}
-                className="ml-auto grid min-h-9 min-w-9 place-items-center rounded-full text-ink-meta transition-colors hover:bg-bloom-cream-dim hover:text-signal-concern"
+                className="ml-auto grid min-h-11 min-w-11 place-items-center rounded-full text-ink-meta transition-colors hover:bg-bloom-cream-dim hover:text-signal-concern"
               >
                 <X aria-hidden="true" className="h-4 w-4" />
               </button>

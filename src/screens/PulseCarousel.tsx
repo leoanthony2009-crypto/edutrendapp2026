@@ -1,12 +1,48 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Check } from 'lucide-react'
+import { useRovingRadio } from '../hooks/useRovingRadio'
 import { useAppStore } from '../store/AppStore'
 import { BloomMarkAnimated } from '../components/BloomLogo'
 import { MarkBadge, PrimaryButton, ProgressBar, ScreenSkeleton, ThemeBadge, EmptyState } from '../components/ui'
 import { OneChildEntryForm } from '../components/OneChildEntryForm'
 import { useLoaded } from '../hooks/useLoaded'
 import { PREFER_NOT_TO_SAY } from '../data/questionBanks'
+
+function ChoiceOptions({
+  label,
+  options,
+  selected,
+  onSelect,
+}: {
+  label: string
+  options: string[]
+  selected: number
+  onSelect: (index: number) => void
+}) {
+  const { itemProps } = useRovingRadio(options.length, selected, onSelect)
+  return (
+    <div role="radiogroup" aria-label={label} className="flex flex-col gap-2 px-4 pt-5 md:px-0">
+      {options.map((option, i) => {
+        const isSelected = selected === i
+        return (
+          <button
+            key={option}
+            {...itemProps(i)}
+            className={`flex min-h-[50px] items-center gap-3 rounded-row border-[1.5px] px-4 py-3 text-left transition-colors duration-150 ${
+              isSelected
+                ? 'border-bloom-green bg-bloom-green text-on-dark'
+                : 'border-bloom-line-strong bg-white text-ink hover:border-bloom-green'
+            }`}
+          >
+            <span className="text-sm font-semibold">{option}</span>
+            {isSelected ? <Check aria-hidden="true" className="ml-auto h-4 w-4" strokeWidth={3} /> : null}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
 
 const TITLES = { student: 'Your Voice Today', teacher: 'Daily Pulse', leader: 'Leader Pulse · weekly' }
 const FOOTNOTES = {
@@ -64,7 +100,7 @@ export function PulseCarousel() {
     }[role]
 
     return (
-      <div className="flex flex-col items-center gap-3 px-7 pt-10 text-center md:pt-16">
+      <div role="status" className="flex flex-col items-center gap-3 px-7 pt-10 text-center md:pt-16">
         <BloomMarkAnimated size={76} />
         <h1 className="font-display text-[26px] font-extrabold text-bloom-green">{copy.title}</h1>
         <p className="max-w-sm text-[13px] leading-relaxed text-[#6B6F5F]">{copy.body}</p>
@@ -108,8 +144,14 @@ export function PulseCarousel() {
       <div className="flex items-center justify-between px-4 pt-4 md:px-0">
         <h1 className="font-display text-[15px] font-bold text-bloom-green">{TITLES[role]}</h1>
         <div className="flex items-center gap-3">
-          <span className="text-[11px] font-bold text-ink-gold" aria-label={`Question ${qi + 1} of ${questions.length}`}>
-            {qi + 1} / {questions.length}
+          {/* Polite announcement of progress for screen readers (audit P1-3) */}
+          <span aria-live="polite" className="text-[11px] font-bold text-ink-gold">
+            <span aria-hidden="true">
+              {qi + 1} / {questions.length}
+            </span>
+            <span className="sr-only">
+              Question {qi + 1} of {questions.length}
+            </span>
           </span>
           {role !== 'student' ? (
             <Link to="/manage" className="text-[11px] font-bold text-bloom-green underline underline-offset-2">
@@ -137,27 +179,13 @@ export function PulseCarousel() {
       </div>
 
       {isChoice ? (
-        <div role="radiogroup" aria-label={q.text} className="flex flex-col gap-2 px-4 pt-5 md:px-0">
-          {q.options!.map((label, i) => {
-            const selected = answer === i
-            return (
-              <button
-                key={label}
-                role="radio"
-                aria-checked={selected}
-                onClick={() => store.setDraft(q.id, i)}
-                className={`flex min-h-[50px] items-center gap-3 rounded-row border-[1.5px] px-4 py-3 text-left transition-colors duration-150 ${
-                  selected
-                    ? 'border-bloom-green bg-bloom-green text-on-dark'
-                    : 'border-bloom-line-strong bg-white text-ink hover:border-bloom-green'
-                }`}
-              >
-                <span className="text-sm font-semibold">{label}</span>
-                {selected ? <Check aria-hidden="true" className="ml-auto h-4 w-4" strokeWidth={3} /> : null}
-              </button>
-            )
-          })}
-        </div>
+        <ChoiceOptions
+          key={q.id}
+          label={q.text}
+          options={q.options!}
+          selected={typeof answer === 'number' ? answer : -1}
+          onSelect={(i) => store.setDraft(q.id, i)}
+        />
       ) : (
         <div className="px-4 pt-5 md:px-0">
           {/* Free text is a textarea, not a single-line input (DESIGN_REVIEW P1.4) */}

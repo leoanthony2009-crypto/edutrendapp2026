@@ -49,12 +49,12 @@ describe('accessibility gate: core journeys', () => {
     await expectNoViolations(await renderRoute('/'))
   })
 
-  it('splash overlay (first launch)', async () => {
+  it('splash overlay (first launch, tap-skippable)', async () => {
     seed(null)
     window.localStorage.removeItem('bloom:v1:splashSeen')
     window.history.pushState({}, '', '/')
     const { container } = render(<App />)
-    await screen.findByRole('status')
+    await screen.findByRole('button', { name: /tap to skip/i })
     await expectNoViolations(container)
   })
 

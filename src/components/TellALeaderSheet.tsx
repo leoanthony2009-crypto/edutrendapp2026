@@ -21,7 +21,7 @@ export function TellALeaderSheet({ open, onClose }: { open: boolean; onClose: ()
   return (
     <Sheet open={open} onClose={close} label="Tell a leader">
       {sent ? (
-        <div className="px-1.5 py-2 text-center">
+        <div role="status" className="px-1.5 py-2 text-center">
           <div aria-hidden="true" className="text-3xl text-bloom-green">
             ✓
           </div>

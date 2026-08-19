@@ -29,10 +29,22 @@
   --color-mark-selfemptying: #8e6fb6;
   --color-mark-safety: #6e2b2f;
 
+  /* Deep variants — same hues darkened so white badge text and small colored
+   * text on light surfaces meet WCAG 4.5:1 (audit P1-1). Bars and fills keep
+   * the original palette; text-bearing uses take the deep tokens. */
+  --color-mark-relating-deep: #8a7325;
+  --color-mark-listening-deep: #2f5f96;
+  --color-mark-discerning-deep: #3d7a50;
+  --color-mark-selfemptying-deep: #6e5494;
+  --color-mark-selfemptying-soft: #b7a3d6; /* labels on charcoal/green */
+  --color-bloom-gold-soft: #f0ce72; /* micro-labels on bloom-green */
+
   /* Signals */
   --color-signal-good: #5baa70;
   --color-signal-warn: #e19a45;
   --color-signal-concern: #d9634e;
+  --color-signal-good-deep: #417e52;
+  --color-signal-concern-deep: #a03e2d;
 
   /* Ink — metadata darkened from the prototype's #98917C per DESIGN_REVIEW P1.2 */
   --color-ink: #22342c;

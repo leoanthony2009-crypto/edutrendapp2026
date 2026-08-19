@@ -35,7 +35,7 @@ export function SurveyBuilderPromoCard({ role }: { role: Role }) {
       />
       <div className="mt-1.5 flex justify-between text-[11px] text-on-dark-soft">
         <span>{unlocked ? 'Unlocked ✓' : `${Math.min(done, UNLOCK_TARGET)} of ${UNLOCK_TARGET} pulses completed`}</span>
-        <span className="font-extrabold text-bloom-gold-bright">{unlocked ? 'Open →' : `${remaining} to go`}</span>
+        <span className="font-extrabold text-bloom-gold-soft">{unlocked ? 'Open →' : `${remaining} to go`}</span>
       </div>
     </Link>
   )
@@ -45,7 +45,7 @@ export function SurveyBuilderPromoCard({ role }: { role: Role }) {
 export function WorthNoticingCard({ body, chips }: { body: ReactNode; chips: Array<{ label: string; muted?: boolean }> }) {
   return (
     <section aria-label="Worth noticing" className="rounded-card border border-[#DCD3E8] bg-white p-4">
-      <div className="micro-label text-mark-selfemptying">Worth noticing</div>
+      <div className="micro-label text-mark-selfemptying-deep">Worth noticing</div>
       <p className="mt-1.5 text-[13px] leading-relaxed text-[#4A4636]">{body}</p>
       <div className="mt-2.5 flex flex-wrap gap-1.5">
         {chips.map((chip) => (

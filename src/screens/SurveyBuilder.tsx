@@ -3,12 +3,32 @@ import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { ChevronLeft, Flower2, Pause, Play, Trash2, X } from 'lucide-react'
 import type { SurveyAudience, SurveyDraftQuestion } from '../types/survey'
 import { useAppStore } from '../store/AppStore'
+import { useRovingRadio } from '../hooks/useRovingRadio'
 import { MicroLabel, PageHeader, PrimaryButton, ProgressBar, ScreenSkeleton, StatusBadge } from '../components/ui'
 import { UNLOCK_TARGET } from '../components/cards'
 import { useLoaded } from '../hooks/useLoaded'
 
 const AUDIENCES: SurveyAudience[] = ['My class', 'Whole school', 'Staff']
 const DEFAULT_OPTIONS = ['Yes', 'Mostly', 'Not really', 'No']
+
+function AudienceChips({ audience, onChange }: { audience: SurveyAudience; onChange: (a: SurveyAudience) => void }) {
+  const { itemProps } = useRovingRadio(AUDIENCES.length, AUDIENCES.indexOf(audience), (i) => onChange(AUDIENCES[i]))
+  return (
+    <div role="radiogroup" aria-label="Audience" className="mt-2.5 flex flex-wrap gap-1.5">
+      {AUDIENCES.map((a, i) => (
+        <button
+          key={a}
+          {...itemProps(i)}
+          className={`min-h-11 rounded-full border-[1.5px] px-3.5 py-1.5 text-[11.5px] font-bold transition-colors duration-150 ${
+            audience === a ? 'border-bloom-green bg-bloom-green text-on-dark' : 'border-bloom-line-strong bg-white text-ink-soft hover:border-bloom-green'
+          }`}
+        >
+          {a}
+        </button>
+      ))}
+    </div>
+  )
+}
 
 export function SurveyBuilder() {
   const store = useAppStore()
@@ -102,7 +122,7 @@ export function SurveyBuilder() {
                   <button
                     onClick={() => store.setSurveyStatus(s.id, s.status === 'live' ? 'paused' : 'live')}
                     aria-label={s.status === 'live' ? `Pause survey ${s.title}` : `Resume survey ${s.title}`}
-                    className="grid min-h-9 min-w-9 place-items-center rounded-full text-ink-meta transition-colors hover:bg-bloom-cream-dim hover:text-ink"
+                    className="grid min-h-11 min-w-11 place-items-center rounded-full text-ink-meta transition-colors hover:bg-bloom-cream-dim hover:text-ink"
                   >
                     {s.status === 'live' ? <Pause aria-hidden="true" className="h-4 w-4" /> : <Play aria-hidden="true" className="h-4 w-4" />}
                   </button>
@@ -110,7 +130,7 @@ export function SurveyBuilder() {
                 <button
                   onClick={() => (s.status === 'closed' ? store.deleteSurvey(s.id) : store.setSurveyStatus(s.id, 'closed'))}
                   aria-label={s.status === 'closed' ? `Delete survey ${s.title}` : `Close survey ${s.title}`}
-                  className="grid min-h-9 min-w-9 place-items-center rounded-full text-ink-meta transition-colors hover:bg-bloom-cream-dim hover:text-signal-concern"
+                  className="grid min-h-11 min-w-11 place-items-center rounded-full text-ink-meta transition-colors hover:bg-bloom-cream-dim hover:text-signal-concern"
                 >
                   {s.status === 'closed' ? <Trash2 aria-hidden="true" className="h-4 w-4" /> : <X aria-hidden="true" className="h-4 w-4" />}
                 </button>
@@ -137,21 +157,7 @@ export function SurveyBuilder() {
             placeholder="Survey title — e.g. Homework load check"
             className="w-full rounded-xl border-[1.5px] border-bloom-line-strong bg-[#FDFBF4] px-3.5 py-3 text-sm font-bold outline-none focus:border-bloom-green"
           />
-          <div role="radiogroup" aria-label="Audience" className="mt-2.5 flex flex-wrap gap-1.5">
-            {AUDIENCES.map((a) => (
-              <button
-                key={a}
-                role="radio"
-                aria-checked={audience === a}
-                onClick={() => setAudience(a)}
-                className={`min-h-9 rounded-full border-[1.5px] px-3 py-1.5 text-[11.5px] font-bold transition-colors duration-150 ${
-                  audience === a ? 'border-bloom-green bg-bloom-green text-on-dark' : 'border-bloom-line-strong bg-white text-ink-soft hover:border-bloom-green'
-                }`}
-              >
-                {a}
-              </button>
-            ))}
-          </div>
+          <AudienceChips audience={audience} onChange={setAudience} />
         </div>
 
         <MicroLabel className="px-4 pt-3.5 pb-1.5 text-ink-meta md:px-0">Questions · {questions.length}</MicroLabel>
@@ -163,7 +169,7 @@ export function SurveyBuilder() {
                   onClick={() =>
                     setQuestions((prev) => prev.map((it, j) => (j === idx ? { ...it, options: it.options ? null : DEFAULT_OPTIONS } : it)))
                   }
-                  className="min-h-8 rounded-full bg-bloom-gold-chip px-2.5 py-1 text-[10px] font-bold text-ink-gold transition-colors hover:bg-bloom-gold-line"
+                  className="min-h-11 rounded-full bg-bloom-gold-chip px-3 py-1 text-[10px] font-bold text-ink-gold transition-colors hover:bg-bloom-gold-line"
                   aria-label={`Change question type — currently ${q.options ? `choice with ${q.options.length} options` : 'free text'}`}
                 >
                   {q.options ? `Choice · ${q.options.length}` : 'Free text'}
@@ -171,7 +177,7 @@ export function SurveyBuilder() {
                 <button
                   onClick={() => setQuestions((prev) => prev.filter((_, j) => j !== idx))}
                   aria-label={`Remove question: ${q.text}`}
-                  className="ml-auto grid min-h-9 min-w-9 place-items-center rounded-full text-ink-meta transition-colors hover:bg-bloom-cream-dim hover:text-signal-concern"
+                  className="ml-auto grid min-h-11 min-w-11 place-items-center rounded-full text-ink-meta transition-colors hover:bg-bloom-cream-dim hover:text-signal-concern"
                 >
                   <X aria-hidden="true" className="h-4 w-4" />
                 </button>
