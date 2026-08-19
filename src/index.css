@@ -1,0 +1,52 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  margin: 0;
+  background: #efeae0;
+  color: #22342c;
+  font-family: "Instrument Sans", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Visible keyboard focus everywhere (DESIGN_REVIEW.md P1-1 / WCAG 2.4.7) */
+:focus-visible {
+  outline: 2.5px solid #295c4d;
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+.on-dark :focus-visible {
+  outline-color: #e9b93b;
+}
+
+@keyframes petal {
+  from { transform: scale(0); }
+  to { transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+@layer components {
+  .card {
+    @apply rounded-card border border-border-soft bg-white;
+  }
+  .micro-label {
+    @apply text-[10px] font-bold uppercase tracking-[0.14em];
+  }
+  .sr-only-table {
+    @apply sr-only;
+  }
+}
