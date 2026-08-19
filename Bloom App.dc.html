@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#EFEAE0;font-family:'Instrument Sans',system-ui,sans-serif;display:flex;justify-content:center;padding:28px 0}
+a{color:#295C4D}a:hover{color:#1D4438}
+input{font-family:'Instrument Sans',sans-serif}
+@keyframes petal{from{transform:scale(0)}to{transform:scale(1)}}
+@keyframes breathe{0%,100%{transform:scale(1) rotate(0deg)}50%{transform:scale(1.05) rotate(3deg)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes splashOut{to{opacity:0;visibility:hidden}}
+@media (prefers-reduced-motion: reduce){*{animation:none !important;transition:none !important}}
+</style>
+</helmet>
+<div style="width:400px;height:830px;background:#FAF6EC;border-radius:38px;border:1px solid #E0D9C6;box-shadow:0 18px 50px rgba(34,52,44,.14);position:relative;overflow:hidden;color:#22342C">
+
+  <sc-if value="{{ showSplash }}" hint-placeholder-val="{{ true }}">
+  <div style="position:absolute;inset:0;z-index:50;background:#FAF6EC;display:flex;flex-direction:column;align-items:center;justify-content:center;animation:splashOut .45s ease 1.9s both">
+    <div style="width:120px;height:120px;position:relative;animation:breathe 5s ease-in-out 1.4s infinite">
+      <sc-for list="{{ splashPetals }}" as="p" hint-placeholder-count="6">
+        <div style="position:absolute;inset:0;transform:rotate({{ p.rot }})"><div style="position:absolute;left:50%;top:2px;width:30px;height:58px;margin-left:-15px;border-radius:50% 50% 46% 46%/62% 62% 38% 38%;background:linear-gradient(#E9B93B,#C8A951);transform-origin:50% 100%;animation:petal .6s cubic-bezier(.2,.9,.3,1.2) {{ p.delay }} both"></div></div>
+      </sc-for>
+      <div style="position:absolute;left:50%;top:50%;width:24px;height:24px;margin:-12px 0 0 -12px;border-radius:50%;background:#295C4D;animation:petal .45s ease .68s both"></div>
+    </div>
+    <div style="margin-top:20px;font:800 32px 'Bricolage Grotesque',sans-serif;color:#295C4D;animation:fadeUp .5s ease .75s both">Bloom</div>
+    <div style="margin-top:5px;font:600 12px 'Instrument Sans',sans-serif;color:#8A7A45;letter-spacing:.16em;text-transform:uppercase;animation:fadeUp .5s ease .9s both">Your voice matters</div>
+  </div>
+  </sc-if>
+
+  <div style="height:100%;display:flex;flex-direction:column">
+    <div style="padding:18px 18px 0;display:flex;align-items:center;gap:9px;flex:none">
+      <div style="width:28px;height:28px;border-radius:50%;background:radial-gradient(circle at 50% 46%,#295C4D 0 5px,transparent 5px),conic-gradient(#E9B93B 0 60deg,#C8A951 60deg 120deg,#E9B93B 120deg 180deg,#C8A951 180deg 240deg,#E9B93B 240deg 300deg,#C8A951 300deg)"></div>
+      <div><div style="font:800 16px 'Bricolage Grotesque',sans-serif;color:#295C4D;line-height:1">Bloom</div><div style="font-size:10px;color:#98917C;margin-top:2px">{{ schoolName }}</div></div>
+      <div onClick="{{ cycleRole }}" title="Switch role" style="cursor:pointer;margin-left:auto;font-size:10.5px;font-weight:700;background:#EFE7D2;color:#8A7A45;padding:5px 10px;border-radius:99px;user-select:none">{{ roleChip }} ⇅</div>
+    </div>
+
+    <div style="flex:1;overflow-y:auto;padding-bottom:8px">
+
+      <sc-if value="{{ isToday }}" hint-placeholder-val="{{ true }}">
+
+      <sc-if value="{{ roleStudent }}" hint-placeholder-val="{{ false }}">
+      <div style="padding:18px 18px 0">
+        <div style="font:800 26px 'Bricolage Grotesque',sans-serif;letter-spacing:-.01em">Your voice today</div>
+        <div style="font-size:12px;color:#98917C;margin-top:3px">Form 2 · {{ schoolName }}</div>
+      </div>
+      <div style="margin:14px 16px 0;background:#295C4D;border-radius:18px;padding:18px;color:#F3EFE2">
+        <div style="font:700 18px 'Bricolage Grotesque',sans-serif;line-height:1.3;text-wrap:pretty">{{ studentHeroText }}</div>
+        <div style="font-size:12px;color:#BFD3C6;margin-top:8px;line-height:1.5">{{ studentHeroSub }}</div>
+        <div onClick="{{ goPulse }}" style="cursor:pointer;margin-top:14px;display:inline-block;background:#E9B93B;color:#22342C;font-weight:800;font-size:13.5px;padding:12px 22px;border-radius:13px">{{ studentCta }}</div>
+      </div>
+      <div style="margin:12px 16px 0;display:flex;gap:10px">
+        <div style="flex:1;background:#fff;border:1px solid #E8E2CF;border-radius:16px;padding:13px"><div style="font:800 22px 'Bricolage Grotesque',sans-serif;color:#295C4D">{{ streak }}</div><div style="font-size:11px;color:#98917C">days in a row your voice was heard</div></div>
+        <div style="flex:1;background:#fff;border:1px solid #E8E2CF;border-radius:16px;padding:13px"><div style="font:800 22px 'Bricolage Grotesque',sans-serif;color:#C8A951">2 min</div><div style="font-size:11px;color:#98917C">is all it takes — 5 questions today</div></div>
+      </div>
+      <div style="margin:12px 16px 0;background:#FDF9EF;border:1px solid #EAD9A8;border-radius:16px;padding:14px;font-size:12px;color:#8A7A45;line-height:1.6"><b>Private by design.</b> Teachers see class patterns, never your name next to an answer. If something worries an adult who should help, only your school's Pastoral Champion is told.</div>
+      <div style="margin:12px 16px 16px;background:#fff;border:1px solid #E8E2CF;border-radius:16px;padding:14px">
+        <div style="font-size:10px;letter-spacing:.14em;font-weight:700;color:#98917C">THIS WEEK IN YOUR SCHOOL</div>
+        <div style="font-size:13px;line-height:1.6;margin-top:6px;color:#4A4636">More students said someone made their day better — the Form 1 buddy scheme is working. Thanks for speaking up.</div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ roleTeacher }}" hint-placeholder-val="{{ true }}">
+      <div style="padding:18px 18px 0">
+        <div style="font:800 26px 'Bricolage Grotesque',sans-serif;letter-spacing:-.01em">Today's Insights</div>
+        <div style="font-size:12px;color:#98917C;margin-top:3px">Pastoral Pulse · You + 164 · updated {{ updatedAt }}</div>
+      </div>
+      <div style="margin:14px 16px 0;background:#295C4D;border-radius:18px;padding:16px;color:#F3EFE2;position:relative;overflow:hidden">
+        <div style="position:absolute;right:-20px;top:-20px;width:96px;height:96px;border-radius:50%;background:rgba(233,185,59,.12)"></div>
+        <div style="font-size:10px;letter-spacing:.14em;font-weight:700;color:#C8A951">PASTORAL PULSE · {{ pulseState }}</div>
+        <div style="display:flex;align-items:baseline;gap:8px;margin-top:6px">
+          <span style="font:800 40px 'Bricolage Grotesque',sans-serif;color:#E9B93B">{{ pulseScore }}</span>
+          <span style="font-size:12px;color:#BFD3C6">/ 100 · {{ pulseDelta }} vs last week</span>
+        </div>
+        <div style="display:flex;gap:4px;align-items:flex-end;height:30px;margin-top:9px">
+          <sc-for list="{{ sparkBars }}" as="b" hint-placeholder-count="7">
+            <div style="flex:1;border-radius:3px;height:{{ b.h }};background:{{ b.bg }}"></div>
+          </sc-for>
+        </div>
+        <div style="margin-top:8px;font-size:11px;color:#BFD3C6">{{ pulseNote }}</div>
+      </div>
+      <div style="margin:12px 16px 0;background:#fff;border:1px solid #E8E2CF;border-radius:18px;padding:15px">
+        <div style="display:flex;justify-content:space-between;gap:8px">
+          <span style="font-weight:600;font-size:14.5px;line-height:1.35">Did today's lessons make sense to your class?</span>
+          <span style="flex:none;font:800 10px 'Instrument Sans',sans-serif;color:#fff;background:#5BAA70;padding:4px 7px;border-radius:6px" title="Learning">L</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px">
+          <sc-for list="{{ landRows }}" as="r" hint-placeholder-count="4">
+            <div style="display:grid;grid-template-columns:64px 1fr 32px;gap:8px;align-items:center">
+              <span style="font-size:11px;color:#8A8875;text-align:right">{{ r.label }}</span>
+              <div style="height:11px;background:#F3EFE2;border-radius:99px;overflow:hidden"><div style="height:100%;border-radius:99px;background:{{ r.color }};width:{{ r.w }}"></div></div>
+              <span style="font-size:11px;font-weight:700;color:#5A6156">{{ r.pct }}</span>
+            </div>
+          </sc-for>
+        </div>
+        <div style="margin-top:12px;font-size:11px;color:#98917C">{{ respLine }} · school average 71%</div>
+      </div>
+      <div style="margin:12px 16px 0;background:#fff;border:1px solid #DCD3E8;border-radius:18px;padding:15px">
+        <div style="font-size:10px;letter-spacing:.14em;font-weight:700;color:#8E6FB6">WORTH NOTICING</div>
+        <div style="font-size:13px;line-height:1.6;margin-top:6px;color:#4A4636">Several pupils who reported low belonging this week also said they were unsure who they could speak to. A gentle check-in may help — Bloom never diagnoses the reason.</div>
+        <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">
+          <span style="font-size:11px;font-weight:600;background:#F1ECF7;color:#6E548D;padding:4px 9px;border-radius:99px">Low belonging</span>
+          <span style="font-size:11px;font-weight:600;background:#F1ECF7;color:#6E548D;padding:4px 9px;border-radius:99px">+ No trusted adult</span>
+          <span style="font-size:11px;font-weight:600;background:#F3EFE2;color:#8A8875;padding:4px 9px;border-radius:99px">7 pupils · anonymised</span>
+        </div>
+      </div>
+      <div style="margin:12px 16px 0;background:#FDF9EF;border:1px solid #EAD9A8;border-radius:18px;padding:15px">
+        <div style="font-size:10px;letter-spacing:.14em;font-weight:700;color:#8A7A45">POUI MICRO-MOVE</div>
+        <div style="font-size:13.5px;line-height:1.55;margin-top:6px;font-style:italic;color:#4A4636">"Tomorrow's first ten minutes — water, windows, a song they choose."</div>
+        <div style="font-size:11px;color:#98917C;margin-top:6px">Suggested because today felt heavy in your class's pulses.</div>
+        <div style="display:flex;gap:8px;margin-top:11px">
+          <div onClick="{{ moveTried }}" style="cursor:pointer;font-size:11.5px;font-weight:700;padding:7px 13px;border-radius:10px;background:{{ triedBg }};color:{{ triedColor }};transition:all .15s ease">{{ triedLabel }}</div>
+          <div onClick="{{ moveSaved }}" style="cursor:pointer;font-size:11.5px;font-weight:700;padding:7px 13px;border-radius:10px;border:1px solid #E0D9C6;color:#5A6156">{{ savedLabel }}</div>
+          <a href="https://chatgpt.com/g/g-696d4b9b682c8191b00cce3da28a61bc-bloom-gpt-1-0" target="_blank" style="margin-left:auto;font-size:11.5px;font-weight:800;padding:7px 13px;border-radius:10px;background:#22342C;color:#E9B93B;text-decoration:none">Ask POUI GPT ↗</a>
+        </div>
+        <div style="margin-top:9px;font-size:10.5px;color:#98917C;line-height:1.5">POUI GPT generates more micro-moves from your pulse responses, grounded in Bloom's research base.</div>
+      </div>
+      <div style="margin:12px 16px 0;background:#22342C;border-radius:18px;padding:15px;color:#EFF3ED">
+        <div style="font-size:10px;letter-spacing:.14em;font-weight:700;color:#8E6FB6">ONE CHILD · WATCHLIST</div>
+        <div style="font-size:13px;line-height:1.55;margin-top:6px"><b>F2-073</b> noted by 3 staff across 4 days. Your Champion reads within 24 hours.</div>
+      </div>
+      <div onClick="{{ goBuilder }}" style="cursor:pointer;margin:12px 16px 0;background:linear-gradient(135deg,#1D4438,#295C4D);border-radius:18px;padding:15px;color:#F3EFE2;position:relative;overflow:hidden">
+        <div style="position:absolute;right:-18px;bottom:-18px;width:90px;height:90px;border-radius:50%;background:rgba(233,185,59,.12)"></div>
+        <span style="font-size:9.5px;letter-spacing:.14em;font-weight:800;background:#E9B93B;color:#22342C;padding:4px 8px;border-radius:6px">SURVEY BUILDER</span>
+        <div style="font:800 18px 'Bricolage Grotesque',sans-serif;margin-top:9px">Launch your own survey</div>
+        <div style="font-size:12px;color:#BFD3C6;line-height:1.5;margin-top:4px">{{ builderCardSub }}</div>
+        <div style="margin-top:10px;height:6px;background:rgba(243,239,226,.15);border-radius:99px;overflow:hidden"><div style="height:100%;background:#E9B93B;border-radius:99px;transition:width .3s ease;width:{{ builderPct }}"></div></div>
+        <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:11px;color:#BFD3C6"><span>{{ builderProgressLabel }}</span><span style="font-weight:800;color:#E9B93B">{{ builderCardCta }}</span></div>
+      </div>
+      <div onClick="{{ openTell }}" style="cursor:pointer;margin:12px 20px 16px;font-size:12px;color:#6E2B2F;text-decoration:underline;text-underline-offset:3px">Tell a leader · 24-hour Champion read</div>
+      </sc-if>
+
+      <sc-if value="{{ roleLeader }}" hint-placeholder-val="{{ false }}">
+      <div style="padding:18px 18px 0">
+        <div style="font:800 26px 'Bricolage Grotesque',sans-serif;letter-spacing:-.01em">Leadership view</div>
+        <div style="font-size:12px;color:#98917C;margin-top:3px">{{ schoolName }} · 612 pupils · 38 staff · updated {{ updatedAt }}</div>
+      </div>
+      <div style="margin:14px 16px 0;background:#22342C;border-radius:18px;padding:16px;color:#EFF3ED">
+        <div style="font-size:10px;letter-spacing:.14em;font-weight:700;color:#E9B93B">PERCEPTION GAP · SAFETY</div>
+        <div style="display:flex;gap:14px;margin-top:10px">
+          <div style="flex:1"><div style="font:800 26px 'Bricolage Grotesque',sans-serif;color:#E9B93B">84%</div><div style="font-size:10.5px;color:#AFC3B6">staff believe pupils feel safe</div></div>
+          <div style="flex:1"><div style="font:800 26px 'Bricolage Grotesque',sans-serif;color:#F0967F">67%</div><div style="font-size:10.5px;color:#AFC3B6">pupils say they felt safe this week</div></div>
+        </div>
+        <div style="margin-top:10px;font-size:11.5px;color:#BFD3C6;line-height:1.5">The gap is widest in Forms 2–3, around break times. Neither view is treated as automatically correct.</div>
+      </div>
+      <div style="margin:12px 16px 0;background:#fff;border:1px solid #E8E2CF;border-radius:18px;padding:15px">
+        <div style="font-weight:600;font-size:14px">Whose voice are we least likely to have heard?</div>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:11px">
+          <sc-for list="{{ unheard }}" as="u" hint-placeholder-count="3">
+            <div style="display:grid;grid-template-columns:1fr 80px 34px;gap:8px;align-items:center">
+              <span style="font-size:12.5px;font-weight:600">{{ u.label }}</span>
+              <div style="height:9px;background:#F3EFE2;border-radius:99px;overflow:hidden"><div style="height:100%;border-radius:99px;background:{{ u.color }};width:{{ u.w }}"></div></div>
+              <span style="font-size:11px;font-weight:700;color:#8A8875">{{ u.pct }}</span>
+            </div>
+          </sc-for>
+        </div>
+        <div style="margin-top:10px;font-size:11px;color:#98917C">Participation in this week's Voice carousel, by cohort</div>
+      </div>
+      <div style="margin:12px 16px 0;background:#fff;border:1px solid #DCD3E8;border-radius:18px;padding:15px">
+        <div style="font-size:10px;letter-spacing:.14em;font-weight:700;color:#8E6FB6">WORTH NOTICING</div>
+        <div style="font-size:13px;line-height:1.6;margin-top:6px;color:#4A4636">Pupils saying "I don't want to come tomorrow" this week mostly also reported lessons not making sense — this looks like a learning-support signal, not (yet) a safety one.</div>
+        <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">
+          <span style="font-size:11px;font-weight:600;background:#F1ECF7;color:#6E548D;padding:4px 9px;border-radius:99px">Attendance pull ↓</span>
+          <span style="font-size:11px;font-weight:600;background:#F1ECF7;color:#6E548D;padding:4px 9px;border-radius:99px">+ Lessons unclear</span>
+          <span style="font-size:11px;font-weight:600;background:#F3EFE2;color:#8A8875;padding:4px 9px;border-radius:99px">Form 3 · 20+ pupils</span>
+        </div>
+      </div>
+      <div style="margin:12px 16px 0;background:#22342C;border-radius:18px;padding:15px;color:#EFF3ED">
+        <div style="font-size:10px;letter-spacing:.14em;font-weight:700;color:#8E6FB6">CHAMPION WATCHLIST</div>
+        <div style="font-size:13px;line-height:1.55;margin-top:6px"><b>3 pupils</b> on the watchlist · 1 new this week · all acknowledged within 24h.</div>
+      </div>
+      <div style="margin:12px 16px 16px;background:#FDF9EF;border:1px solid #EAD9A8;border-radius:18px;padding:15px">
+        <div style="font-size:10px;letter-spacing:.14em;font-weight:700;color:#8A7A45">ONE SMALL CHANGE TO TEST TOMORROW</div>
+        <div style="font-size:13.5px;line-height:1.55;margin-top:6px;font-style:italic;color:#4A4636">"Open the library at first break for Forms 2–3 — the pulses point to break time as where safety dips."</div>
+        <div onClick="{{ goPulse }}" style="cursor:pointer;margin-top:11px;display:inline-block;font-size:11.5px;font-weight:700;padding:7px 13px;border-radius:10px;background:#295C4D;color:#F3EFE2">Answer this week's Leader Pulse →</div>
+      </div>
+      <div onClick="{{ goBuilder }}" style="cursor:pointer;margin:12px 16px 16px;background:linear-gradient(135deg,#1D4438,#295C4D);border-radius:18px;padding:15px;color:#F3EFE2;position:relative;overflow:hidden">
+        <div style="position:absolute;right:-18px;bottom:-18px;width:90px;height:90px;border-radius:50%;background:rgba(233,185,59,.12)"></div>
+        <span style="font-size:9.5px;letter-spacing:.14em;font-weight:800;background:#E9B93B;color:#22342C;padding:4px 8px;border-radius:6px">SURVEY BUILDER</span>
+        <div style="font:800 18px 'Bricolage Grotesque',sans-serif;margin-top:9px">Launch your own survey</div>
+        <div style="font-size:12px;color:#BFD3C6;line-height:1.5;margin-top:4px">{{ builderCardSub }}</div>
+        <div style="margin-top:10px;height:6px;background:rgba(243,239,226,.15);border-radius:99px;overflow:hidden"><div style="height:100%;background:#E9B93B;border-radius:99px;transition:width .3s ease;width:{{ builderPct }}"></div></div>
+        <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:11px;color:#BFD3C6"><span>{{ builderProgressLabel }}</span><span style="font-weight:800;color:#E9B93B">{{ builderCardCta }}</span></div>
+      </div>
+      </sc-if>
+      </sc-if>
+
+      <sc-if value="{{ isPulse }}" hint-placeholder-val="{{ false }}">
+      <sc-if value="{{ bankEmpty }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;flex-direction:column;align-items:center;text-align:center;padding:90px 40px 0;gap:10px">
+        <div style="font-size:28px;color:#C8A951">✿</div>
+        <div style="font:700 19px 'Bricolage Grotesque',sans-serif;color:#295C4D">Today's voice is still gathering</div>
+        <div style="font-size:12.5px;color:#98917C;line-height:1.6">There are no questions in this carousel yet. Add one to begin.</div>
+        <div onClick="{{ goManage }}" style="cursor:pointer;margin-top:6px;padding:11px 22px;border-radius:13px;background:#295C4D;color:#F3EFE2;font-weight:800;font-size:13px">Add questions</div>
+      </div>
+      </sc-if>
+      <sc-if value="{{ pulseRunning }}" hint-placeholder-val="{{ true }}">
+      <div style="padding:16px 18px 0;display:flex;justify-content:space-between;align-items:center">
+        <span style="font:700 15px 'Bricolage Grotesque',sans-serif;color:#295C4D">{{ pulseTitle }}</span>
+        <div style="display:flex;gap:12px;align-items:center">
+          <span style="font-size:11px;font-weight:700;color:#8A7A45">{{ qLabel }}</span>
+          <sc-if value="{{ canEdit }}" hint-placeholder-val="{{ true }}">
+            <span onClick="{{ goManage }}" style="cursor:pointer;font-size:11px;font-weight:700;color:#295C4D;text-decoration:underline;text-underline-offset:2px">Edit</span>
+          </sc-if>
+        </div>
+      </div>
+      <div style="margin:12px 18px 0;height:5px;background:#EDE6D3;border-radius:99px;overflow:hidden"><div style="height:100%;background:#C8A951;border-radius:99px;transition:width .3s ease;width:{{ qPct }}"></div></div>
+      <div style="padding:24px 20px 0">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font:800 10px 'Instrument Sans',sans-serif;color:#fff;background:{{ qThemeColor }};padding:4px 8px;border-radius:6px;letter-spacing:.06em">{{ qTheme }}</span>
+        </div>
+        <div style="margin-top:12px;font:700 23px/1.28 'Bricolage Grotesque',sans-serif;letter-spacing:-.01em;text-wrap:pretty">{{ qText }}</div>
+      </div>
+      <sc-if value="{{ qIsChoice }}" hint-placeholder-val="{{ true }}">
+      <div style="display:flex;flex-direction:column;gap:9px;padding:22px 18px 0">
+        <sc-for list="{{ qOpts }}" as="o" hint-placeholder-count="4">
+          <div onClick="{{ o.pick }}" style="cursor:pointer;display:flex;align-items:center;gap:11px;padding:13px 15px;border-radius:14px;transition:all .15s ease;background:{{ o.bg }};border:1.5px solid {{ o.border }};color:{{ o.color }}">
+            <span style="font-weight:600;font-size:14px">{{ o.label }}</span>
+            <span style="margin-left:auto;font-weight:800;font-size:13px">{{ o.check }}</span>
+          </div>
+        </sc-for>
+      </div>
+      </sc-if>
+      <sc-if value="{{ qIsText }}" hint-placeholder-val="{{ false }}">
+      <div style="padding:22px 18px 0">
+        <input value="{{ qTextVal }}" onChange="{{ qTextChange }}" placeholder="{{ qPlaceholder }}" style="width:100%;box-sizing:border-box;padding:14px 15px;border-radius:14px;border:1.5px solid #E0D9C6;background:#fff;font-size:14px;color:#22342C;outline:none">
+        <div style="margin-top:8px;font-size:11px;color:#98917C">{{ qTextNote }}</div>
+      </div>
+      </sc-if>
+      <div style="padding:20px 18px 0;display:flex;gap:9px">
+        <div onClick="{{ qBack }}" style="cursor:pointer;padding:13px 18px;border-radius:14px;border:1.5px solid #E0D9C6;font-weight:700;font-size:13px;color:#8A8875">Back</div>
+        <div onClick="{{ qNext }}" style="cursor:pointer;flex:1;text-align:center;padding:13px;border-radius:14px;font-weight:800;font-size:14px;transition:all .15s ease;background:{{ qNextBg }};color:{{ qNextColor }}">{{ qNextLabel }}</div>
+      </div>
+      <div style="text-align:center;font-size:11px;color:#98917C;padding-top:12px">{{ pulseFootnote }}</div>
+      </sc-if>
+      <sc-if value="{{ pulseDone }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;flex-direction:column;align-items:center;text-align:center;padding:60px 30px 0;gap:12px">
+        <div style="width:76px;height:76px;position:relative;animation:breathe 5s ease-in-out infinite">
+          <sc-for list="{{ splashPetals }}" as="p" hint-placeholder-count="6">
+            <div style="position:absolute;inset:0;transform:rotate({{ p.rot }})"><div style="position:absolute;left:50%;top:1px;width:19px;height:37px;margin-left:-10px;border-radius:50% 50% 46% 46%/62% 62% 38% 38%;background:linear-gradient(#E9B93B,#C8A951);transform-origin:50% 100%;animation:petal .5s cubic-bezier(.2,.9,.3,1.2) {{ p.delay }} both"></div></div>
+          </sc-for>
+          <div style="position:absolute;left:50%;top:50%;width:16px;height:16px;margin:-8px 0 0 -8px;border-radius:50%;background:#295C4D"></div>
+        </div>
+        <div style="font:800 26px 'Bricolage Grotesque',sans-serif;color:#295C4D">{{ doneTitle }}</div>
+        <div style="font-size:13px;color:#6B6F5F;line-height:1.6">{{ doneBody }}</div>
+        <div onClick="{{ goToday }}" style="cursor:pointer;margin-top:8px;padding:13px 26px;border-radius:14px;background:#295C4D;color:#F3EFE2;font-weight:800;font-size:14px">{{ doneCta }}</div>
+        <div onClick="{{ restartPulse }}" style="cursor:pointer;font-size:12px;color:#8A7A45;text-decoration:underline;text-underline-offset:2px">Run again</div>
+      </div>
+      </sc-if>
+      </sc-if>
+
+      <sc-if value="{{ isTrends }}" hint-placeholder-val="{{ false }}">
+      <div style="padding:18px 18px 0">
+        <div style="font:800 26px 'Bricolage Grotesque',sans-serif;letter-spacing:-.01em">Trends</div>
+        <div style="font-size:12px;color:#98917C;margin-top:3px">Collated from {{ runCount }} pulse runs · {{ schoolName }}</div>
+      </div>
+      <div style="margin:14px 16px 0;display:flex;background:#EDE6D3;border-radius:12px;padding:3px">
+        <sc-for list="{{ rangeTabs }}" as="t" hint-placeholder-count="3">
+          <div onClick="{{ t.pick }}" style="cursor:pointer;flex:1;text-align:center;padding:8px 0;border-radius:10px;font-size:12.5px;font-weight:700;transition:all .15s ease;background:{{ t.bg }};color:{{ t.color }}">{{ t.label }}</div>
+        </sc-for>
+      </div>
+      <div style="margin:12px 16px 0;background:#fff;border:1px solid #E8E2CF;border-radius:18px;padding:15px">
+        <div style="font-weight:600;font-size:14px">Pastoral Pulse over time</div>
+        <div style="font-size:11px;color:#98917C;margin-top:2px">{{ rangeCaption }} · includes today's collated pulses</div>
+        <svg viewBox="0 0 330 110" style="width:100%;margin-top:10px;display:block">
+          <line x1="10" y1="90" x2="320" y2="90" stroke="#EDE6D3" strokeWidth="1"></line>
+          <line x1="10" y1="50" x2="320" y2="50" stroke="#F3EFE2" strokeWidth="1"></line>
+          <polygon points="{{ trendArea }}" fill="rgba(200,169,81,.15)"></polygon>
+          <polyline points="{{ trendPoints }}" fill="none" stroke="#295C4D" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"></polyline>
+          <sc-for list="{{ trendDots }}" as="d" hint-placeholder-count="7">
+            <circle cx="{{ d.cx }}" cy="{{ d.cy }}" r="{{ d.r }}" fill="{{ d.fill }}"></circle>
+          </sc-for>
+        </svg>
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:#98917C;padding:2px 4px 0"><span>{{ trendStart }}</span><span>today</span></div>
+      </div>
+      <div style="margin:12px 16px 0;background:#fff;border:1px solid #E8E2CF;border-radius:18px;padding:15px">
+        <div style="font-weight:600;font-size:14px">Domain snapshot · this week</div>
+        <div style="font-size:11px;color:#98917C;margin-top:2px">The eight Bloom pastoral domains</div>
+        <div style="display:flex;flex-direction:column;gap:9px;margin-top:12px">
+          <sc-for list="{{ domains }}" as="d" hint-placeholder-count="8">
+            <div style="display:grid;grid-template-columns:118px 1fr 40px;gap:8px;align-items:center">
+              <span style="font-size:11px;font-weight:600;color:#5A6156">{{ d.label }}</span>
+              <div style="height:9px;background:#F3EFE2;border-radius:99px;overflow:hidden"><div style="height:100%;border-radius:99px;background:{{ d.color }};width:{{ d.w }}"></div></div>
+              <span style="font-size:11px;font-weight:700;color:{{ d.deltaColor }}">{{ d.delta }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      <div style="margin:12px 16px 0;background:#fff;border:1px solid #E8E2CF;border-radius:18px;padding:15px">
+        <div style="font-weight:600;font-size:14px">Voice participation</div>
+        <div style="font-size:11px;color:#98917C;margin-top:2px">Share of pupils completing the daily carousel</div>
+        <div style="display:flex;gap:6px;align-items:flex-end;height:64px;margin-top:12px">
+          <sc-for list="{{ partBars }}" as="b" hint-placeholder-count="7">
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end">
+              <div style="width:100%;border-radius:5px;background:{{ b.bg }};height:{{ b.h }}"></div>
+              <span style="font-size:9px;color:#98917C">{{ b.label }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      <div style="margin:12px 16px 16px;background:#fff;border:1px solid #E8E2CF;border-radius:18px;padding:15px">
+        <div style="font-weight:600;font-size:14px">Recurring themes</div>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:12px">
+          <sc-for list="{{ themes }}" as="th" hint-placeholder-count="3">
+            <div style="display:grid;grid-template-columns:1fr 90px;gap:10px;align-items:center">
+              <div><div style="font-size:13px;font-weight:600">{{ th.label }}</div><div style="font-size:10.5px;color:#98917C">{{ th.sub }}</div></div>
+              <div style="height:9px;background:#F3EFE2;border-radius:99px;overflow:hidden"><div style="height:100%;border-radius:99px;background:{{ th.color }};width:{{ th.w }}"></div></div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ isHot }}" hint-placeholder-val="{{ false }}">
+      <div style="padding:18px 18px 0">
+        <div style="font:800 26px 'Bricolage Grotesque',sans-serif;letter-spacing:-.01em">What's Emerging</div>
+        <div style="font-size:12px;color:#98917C;margin-top:3px">Signals across {{ schoolName }} and the district</div>
+      </div>
+      <div onClick="{{ openNat }}" style="cursor:pointer;margin:14px 16px 0;background:#22342C;border-radius:16px;padding:14px 15px;color:#EFF3ED;display:flex;align-items:center;gap:11px">
+        <div style="width:36px;height:36px;border-radius:50%;background:rgba(233,185,59,.14);display:grid;place-items:center;color:#E9B93B;font-size:16px">◍</div>
+        <div style="flex:1"><div style="font-weight:700;font-size:13.5px">National Report</div><div style="font-size:11px;color:#AFC3B6;margin-top:2px">Aggregated monthly insights · Trinidad &amp; Tobago</div></div>
+        <span style="font-size:10px;font-weight:800;background:#E9B93B;color:#22342C;padding:4px 8px;border-radius:99px">NEW</span>
+      </div>
+      <div style="margin:10px 16px 0;background:#FDF9EF;border:1px solid #EAD9A8;border-radius:14px;padding:11px 14px;font-size:11.5px;color:#8A7A45;line-height:1.5"><b>Privacy shield.</b> Themes appear only when 20+ voices in a comparison group have responded.</div>
+      <div style="padding:0 16px;margin-top:12px;display:flex;flex-direction:column;gap:10px">
+        <sc-for list="{{ hotCards }}" as="h" hint-placeholder-count="3">
+          <div style="background:#fff;border:1px solid #E8E2CF;border-radius:18px;padding:15px">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <span style="font-size:10px;letter-spacing:.12em;font-weight:700;color:#98917C">{{ h.cat }}</span>
+              <span style="font-size:11px;font-weight:800;color:{{ h.heatColor }}">{{ h.heat }}</span>
+            </div>
+            <div style="font:700 17px 'Bricolage Grotesque',sans-serif;margin-top:6px">{{ h.title }}</div>
+            <div style="font-size:12.5px;color:#6B6F5F;line-height:1.55;margin-top:4px">{{ h.body }}</div>
+            <div style="margin-top:10px;height:4px;border-radius:99px;background:{{ h.bar }}"></div>
+            <div style="margin-top:8px;font-size:11px;color:#98917C">{{ h.why }}</div>
+            <div onClick="{{ h.openShot }}" style="cursor:pointer;margin-top:10px;display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;color:#22342C;background:#F4EDDA;border:1px solid #EAD9A8;padding:7px 13px;border-radius:99px"><span style="color:#C8A951">⚡</span> Micro-Learning Shot</div>
+          </div>
+        </sc-for>
+      </div>
+      <div style="height:16px"></div>
+      </sc-if>
+
+      <sc-if value="{{ isManage }}" hint-placeholder-val="{{ false }}">
+      <div style="padding:18px 18px 0;display:flex;align-items:center;gap:10px">
+        <span onClick="{{ goPulse }}" style="cursor:pointer;font-size:18px;color:#8A8875">‹</span>
+        <div><div style="font:800 22px 'Bricolage Grotesque',sans-serif">{{ manageTitle }}</div><div style="font-size:11.5px;color:#98917C;margin-top:2px">{{ manageSub }}</div></div>
+      </div>
+      <div style="padding:14px 16px 0;display:flex;flex-direction:column;gap:9px">
+        <sc-for list="{{ qRows }}" as="q" hint-placeholder-count="5">
+          <div style="background:#fff;border:1px solid #E8E2CF;border-radius:14px;padding:11px 13px">
+            <div style="display:flex;gap:8px;align-items:center">
+              <span style="font:800 10px 'Instrument Sans',sans-serif;color:#fff;background:{{ q.themeColor }};padding:4px 8px;border-radius:6px;letter-spacing:.06em">{{ q.theme }}</span>
+              <span onClick="{{ q.toggleType }}" style="cursor:pointer;font-size:10px;font-weight:700;color:#8A7A45;background:#F4EDDA;padding:4px 8px;border-radius:99px">{{ q.type }}</span>
+              <span style="font-size:10px;color:#C4BFAF">{{ q.rotated }}</span>
+              <span onClick="{{ q.remove }}" style="cursor:pointer;margin-left:auto;font-size:14px;color:#C4BFAF">✕</span>
+            </div>
+            <input value="{{ q.text }}" onChange="{{ q.edit }}" style="width:100%;box-sizing:border-box;margin-top:8px;padding:8px 10px;border-radius:9px;border:1px solid #EDE6D3;background:#FDFBF4;font-size:13px;color:#22342C;outline:none">
+            <div style="margin-top:6px;font-size:10.5px;color:#98917C">{{ q.optsLine }}</div>
+          </div>
+        </sc-for>
+        <div onClick="{{ addQ }}" style="cursor:pointer;border:1.5px dashed #C4BFAF;border-radius:14px;padding:12px;text-align:center;font-size:13px;font-weight:700;color:#8A8875">+ Add question</div>
+        <div style="font-size:11px;color:#98917C;line-height:1.5;padding:2px 4px 16px">{{ manageNote }}</div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ isBuilder }}" hint-placeholder-val="{{ false }}">
+      <div style="padding:18px 18px 0;display:flex;align-items:center;gap:10px">
+        <span onClick="{{ goToday }}" style="cursor:pointer;font-size:18px;color:#8A8875">‹</span>
+        <div><div style="font:800 22px 'Bricolage Grotesque',sans-serif">Survey Builder</div><div style="font-size:11.5px;color:#98917C;margin-top:2px">Turn your idea into a live pulse</div></div>
+      </div>
+      <sc-if value="{{ builderLocked }}" hint-placeholder-val="{{ false }}">
+      <div style="margin:20px 16px 0;background:#fff;border:1px solid #E8E2CF;border-radius:20px;padding:26px 22px;text-align:center">
+        <div style="width:56px;height:56px;margin:0 auto;border-radius:50%;background:#F4EDDA;display:grid;place-items:center;font-size:22px;color:#C8A951">✿</div>
+        <div style="font:800 20px 'Bricolage Grotesque',sans-serif;color:#295C4D;margin-top:12px">Blooms with your voice</div>
+        <div style="font-size:12.5px;color:#6B6F5F;line-height:1.6;margin-top:8px">The Survey Builder unlocks after <b>10 completed pulses</b> — so every survey is built by someone who answers them too.</div>
+        <div style="margin-top:18px;height:8px;background:#F3EFE2;border-radius:99px;overflow:hidden"><div style="height:100%;background:#C8A951;border-radius:99px;transition:width .3s ease;width:{{ builderPct }}"></div></div>
+        <div style="font-size:12px;font-weight:700;color:#8A7A45;margin-top:8px">{{ builderProgressLabel }} · {{ builderRemaining }} to go</div>
+        <div onClick="{{ goPulse }}" style="cursor:pointer;margin-top:16px;display:inline-block;padding:12px 24px;border-radius:13px;background:#295C4D;color:#F3EFE2;font-weight:800;font-size:13.5px">Complete today's pulse →</div>
+      </div>
+      </sc-if>
+      <sc-if value="{{ builderOpen }}" hint-placeholder-val="{{ true }}">
+      <sc-if value="{{ justLaunched }}" hint-placeholder-val="{{ false }}">
+      <div style="margin:14px 16px 0;background:#EAF4EC;border:1px solid #BFDCC8;border-radius:14px;padding:12px 14px;font-size:12.5px;color:#2F5E3F;font-weight:600">✓ Survey launched. Responses will collate into Trends within 24 hours.</div>
+      </sc-if>
+      <sc-if value="{{ hasSurveys }}" hint-placeholder-val="{{ false }}">
+      <div style="padding:16px 18px 6px;font-size:10px;letter-spacing:.14em;font-weight:700;color:#98917C">YOUR SURVEYS</div>
+      <div style="padding:0 16px;display:flex;flex-direction:column;gap:8px">
+        <sc-for list="{{ mySurveyRows }}" as="m" hint-placeholder-count="1">
+          <div style="background:#fff;border:1px solid #E8E2CF;border-radius:14px;padding:12px 14px;display:flex;align-items:center;gap:10px">
+            <div style="flex:1"><div style="font-weight:700;font-size:13.5px">{{ m.title }}</div><div style="font-size:11px;color:#98917C;margin-top:2px">{{ m.sub }}</div></div>
+            <span style="font-size:10px;font-weight:800;color:#2F5E3F;background:#EAF4EC;padding:4px 9px;border-radius:99px">LIVE</span>
+          </div>
+        </sc-for>
+      </div>
+      </sc-if>
+      <div style="padding:16px 18px 6px;font-size:10px;letter-spacing:.14em;font-weight:700;color:#98917C">NEW SURVEY</div>
+      <div style="margin:0 16px;background:#fff;border:1px solid #E8E2CF;border-radius:18px;padding:15px">
+        <input value="{{ bTitle }}" onChange="{{ bTitleChange }}" placeholder="Survey title — e.g. Homework load check" style="width:100%;box-sizing:border-box;padding:12px 13px;border-radius:12px;border:1.5px solid #E0D9C6;background:#FDFBF4;font:700 14px 'Instrument Sans',sans-serif;color:#22342C;outline:none">
+        <div style="display:flex;gap:7px;margin-top:11px">
+          <sc-for list="{{ audChips }}" as="a" hint-placeholder-count="3">
+            <div onClick="{{ a.pick }}" style="cursor:pointer;font-size:11.5px;font-weight:700;padding:7px 12px;border-radius:99px;transition:all .15s ease;background:{{ a.bg }};color:{{ a.color }};border:1.5px solid {{ a.border }}">{{ a.label }}</div>
+          </sc-for>
+        </div>
+      </div>
+      <div style="padding:14px 18px 6px;font-size:10px;letter-spacing:.14em;font-weight:700;color:#98917C">QUESTIONS · {{ bQCount }}</div>
+      <div style="padding:0 16px;display:flex;flex-direction:column;gap:8px">
+        <sc-for list="{{ bQRows }}" as="q" hint-placeholder-count="2">
+          <div style="background:#fff;border:1px solid #E8E2CF;border-radius:14px;padding:11px 13px">
+            <div style="display:flex;gap:8px;align-items:center">
+              <span onClick="{{ q.toggleType }}" style="cursor:pointer;font-size:10px;font-weight:700;color:#8A7A45;background:#F4EDDA;padding:4px 8px;border-radius:99px">{{ q.type }}</span>
+              <span onClick="{{ q.remove }}" style="cursor:pointer;margin-left:auto;font-size:14px;color:#C4BFAF">✕</span>
+            </div>
+            <input value="{{ q.text }}" onChange="{{ q.edit }}" style="width:100%;box-sizing:border-box;margin-top:8px;padding:8px 10px;border-radius:9px;border:1px solid #EDE6D3;background:#FDFBF4;font-size:13px;color:#22342C;outline:none">
+            <div style="margin-top:6px;font-size:10.5px;color:#98917C">{{ q.optsLine }}</div>
+          </div>
+        </sc-for>
+        <div onClick="{{ addBQ }}" style="cursor:pointer;border:1.5px dashed #C4BFAF;border-radius:14px;padding:11px;text-align:center;font-size:13px;font-weight:700;color:#8A8875">+ Add question</div>
+      </div>
+      <div style="padding:14px 16px 6px">
+        <div onClick="{{ launchSurvey }}" style="cursor:pointer;text-align:center;padding:14px;border-radius:15px;font-weight:800;font-size:14.5px;transition:all .15s ease;background:{{ launchBg }};color:{{ launchColor }}">{{ launchLabel }}</div>
+        <div style="text-align:center;font-size:11px;color:#98917C;padding:10px 10px 16px;line-height:1.5">Anonymity thresholds apply automatically — results appear only above 20 voices.</div>
+      </div>
+      </sc-if>
+      </sc-if>
+
+      <sc-if value="{{ isProfile }}" hint-placeholder-val="{{ false }}">
+      <div style="padding:18px 18px 0">
+        <div style="font:800 26px 'Bricolage Grotesque',sans-serif">Profile</div>
+        <div style="font-size:12px;color:#98917C;margin-top:3px">{{ schoolName }} · {{ roleChip }}</div>
+      </div>
+      <div style="margin:14px 16px 0;display:flex;flex-direction:column;gap:9px">
+        <div style="background:#fff;border:1px solid #E8E2CF;border-radius:16px;padding:14px 15px;display:flex;align-items:center;gap:11px">
+          <div style="width:40px;height:40px;border-radius:50%;background:#295C4D;display:grid;place-items:center;color:#E9B93B;font:800 15px 'Bricolage Grotesque',sans-serif">{{ initials }}</div>
+          <div><div style="font-weight:700;font-size:14px">{{ profileName }}</div><div style="font-size:11.5px;color:#98917C">{{ profileSub }}</div></div>
+        </div>
+        <sc-if value="{{ canEdit }}" hint-placeholder-val="{{ true }}">
+        <div onClick="{{ goManage }}" style="cursor:pointer;background:#fff;border:1px solid #E8E2CF;border-radius:16px;padding:14px 15px;display:flex;justify-content:space-between;align-items:center"><span style="font-weight:600;font-size:13.5px">Carousel questions</span><span style="color:#C4BFAF">›</span></div>
+        </sc-if>
+        <div onClick="{{ toggleNotif }}" style="cursor:pointer;background:#fff;border:1px solid #E8E2CF;border-radius:16px;padding:14px 15px;display:flex;justify-content:space-between;align-items:center">
+          <div><div style="font-weight:600;font-size:13.5px">Friday Bridge digest</div><div style="font-size:11px;color:#98917C;margin-top:2px">A weekly read of what your week revealed</div></div>
+          <div style="width:40px;height:23px;border-radius:99px;position:relative;transition:all .2s ease;background:{{ notifBg }}"><div style="position:absolute;top:2.5px;width:18px;height:18px;border-radius:50%;background:#fff;transition:all .2s ease;left:{{ notifLeft }}"></div></div>
+        </div>
+        <div style="background:#fff;border:1px solid #E8E2CF;border-radius:16px;padding:4px 15px">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid #F3EFE2"><span style="font-size:10px;letter-spacing:.1em;font-weight:700;color:#98917C">SCHOOL TYPE</span><span style="font-size:12.5px;font-weight:700">Secondary</span></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid #F3EFE2"><span style="font-size:10px;letter-spacing:.1em;font-weight:700;color:#98917C">BOARD</span><span style="font-size:12.5px;font-weight:700">Catholic · CEBM</span></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:11px 0"><span style="font-size:10px;letter-spacing:.1em;font-weight:700;color:#98917C">LOCATION</span><span style="font-size:12.5px;font-weight:700">Port of Spain</span></div>
+        </div>
+        <sc-if value="{{ canEdit }}" hint-placeholder-val="{{ true }}">
+        <div onClick="{{ openPerks }}" style="cursor:pointer;background:linear-gradient(135deg,#C8A951,#E9B93B);border-radius:16px;padding:14px 15px;display:flex;align-items:center;gap:10px;color:#22342C">
+          <span style="font-size:16px">✿</span>
+          <span style="font-weight:800;font-size:14px;flex:1">Teacher Perks</span>
+          <span style="font-size:10.5px;font-weight:800;background:#22342C;color:#E9B93B;padding:4px 9px;border-radius:99px">4 New</span>
+        </div>
+        </sc-if>
+        <div onClick="{{ sendFeedback }}" style="cursor:pointer;background:#fff;border:1px solid #E8E2CF;border-radius:16px;padding:14px 15px;display:flex;justify-content:space-between;align-items:center"><span style="font-weight:600;font-size:13.5px">{{ feedbackLabel }}</span><span style="color:#C4BFAF">›</span></div>
+        <div style="background:#fff;border:1px solid #E8E2CF;border-radius:16px;padding:14px 15px">
+          <div style="font-weight:600;font-size:13.5px">Privacy</div>
+          <div style="font-size:11.5px;color:#98917C;line-height:1.55;margin-top:4px">Voices are anonymised. Free text signalling concern is read only by the school's Pastoral Champion within 24 hours. Pupils are referenced by handles, never names. Insights appear only above the 20-voice threshold.</div>
+        </div>
+        <div style="text-align:center;font-size:10.5px;color:#C4BFAF;padding:6px 0 16px">Bloom · BLOOM Foundation · Trinidad &amp; Tobago · v2.0 · Every Child, Every Chance</div>
+      </div>
+      </sc-if>
+
+    </div>
+
+    <div style="flex:none;display:flex;justify-content:space-around;align-items:center;padding:9px 8px 14px;border-top:1px solid #E8E2CF;background:#FAF6EC">
+      <sc-for list="{{ navItems }}" as="n" hint-placeholder-count="5">
+        <div onClick="{{ n.pick }}" style="cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;min-width:52px;padding:4px 0;color:{{ n.color }}">
+          <span style="font-size:17px;line-height:1">{{ n.icon }}</span>
+          <span style="font-size:9.5px;font-weight:{{ n.weight }}">{{ n.label }}</span>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+
+  <sc-if value="{{ shotOpen }}" hint-placeholder-val="{{ false }}">
+  <div onClick="{{ closeShot }}" style="position:absolute;inset:0;z-index:44;background:rgba(34,52,44,.45);display:flex;align-items:center;justify-content:center;padding:24px">
+    <div style="width:100%;background:#FAF6EC;border-radius:22px;overflow:hidden">
+      <div style="background:linear-gradient(135deg,#1D4438,#295C4D);padding:18px 18px 26px;position:relative">
+        <div onClick="{{ closeShot }}" style="cursor:pointer;position:absolute;right:12px;top:12px;width:28px;height:28px;border-radius:50%;background:rgba(243,239,226,.15);display:grid;place-items:center;color:#F3EFE2;font-size:12px">✕</div>
+        <div style="width:44px;height:44px;border-radius:13px;background:#FAF6EC;display:grid;place-items:center;font-size:20px;color:#C8A951;box-shadow:0 4px 12px rgba(0,0,0,.15)">⚡</div>
+      </div>
+      <div style="padding:14px 18px 18px">
+        <div style="font-size:10px;letter-spacing:.14em;font-weight:800;color:#8A7A45">MICRO-LEARNING SHOT</div>
+        <div style="font:800 21px 'Bricolage Grotesque',sans-serif;color:#22342C;margin-top:4px">{{ shotTitle }}</div>
+        <div style="margin-top:12px;background:#fff;border:1px solid #E8E2CF;border-radius:14px;padding:12px 14px">
+          <div style="font-size:11px;font-weight:800;color:#295C4D">The concept</div>
+          <div style="font-size:12.5px;color:#5A6156;line-height:1.6;margin-top:4px">{{ shotConcept }}</div>
+        </div>
+        <div style="margin-top:9px;background:#FDF9EF;border:1px solid #EAD9A8;border-radius:14px;padding:12px 14px">
+          <div style="font-size:11px;font-weight:800;color:#8A7A45">Try this tomorrow</div>
+          <div style="font-size:12.5px;color:#5A6156;line-height:1.6;margin-top:4px">{{ shotTry }}</div>
+        </div>
+        <div style="margin-top:9px;background:#fff;border:1px solid #E8E2CF;border-radius:14px;padding:12px 14px">
+          <div style="font-size:11px;font-weight:800;color:#4A8AD0">Grounded in research</div>
+          <div style="font-size:11.5px;color:#5A6156;line-height:1.6;margin-top:4px">{{ shotResearchLocal }}</div>
+          <div style="font-size:11.5px;color:#5A6156;line-height:1.6;margin-top:5px">{{ shotResearchWider }}</div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:14px">
+          <div onClick="{{ closeShot }}" style="cursor:pointer;flex:1;text-align:center;padding:13px;border-radius:14px;background:#22342C;color:#F3EFE2;font-weight:800;font-size:14px">Got it, thanks →</div>
+          <a href="https://chatgpt.com/g/g-696d4b9b682c8191b00cce3da28a61bc-bloom-gpt-1-0" target="_blank" style="flex:none;display:grid;place-items:center;padding:0 16px;border-radius:14px;background:#F4EDDA;color:#8A7A45;font-weight:800;font-size:12.5px;text-decoration:none">POUI GPT ↗</a>
+        </div>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ natOpen }}" hint-placeholder-val="{{ false }}">
+  <div style="position:absolute;inset:0;z-index:45;background:#FAF6EC;display:flex;flex-direction:column">
+    <div style="background:#22342C;padding:18px;color:#EFF3ED;position:relative">
+      <div onClick="{{ closeNat }}" style="cursor:pointer;position:absolute;right:14px;top:14px;width:28px;height:28px;border-radius:50%;background:rgba(243,239,226,.12);display:grid;place-items:center;font-size:12px">✕</div>
+      <div style="display:flex;align-items:center;gap:8px"><span style="color:#E9B93B;font-size:15px">◍</span><span style="font:800 17px 'Bricolage Grotesque',sans-serif">National Report</span></div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-top:12px">
+        <div><div style="font-size:11px;letter-spacing:.12em;font-weight:800;color:#8FE3B0">JULY 2026</div><div style="font-size:11.5px;color:#AFC3B6;margin-top:3px">12,450 total participants</div></div>
+        <div style="text-align:right"><div style="font:800 22px 'Bricolage Grotesque',sans-serif;color:#8FE3B0">+15%</div><div style="font-size:9.5px;letter-spacing:.1em;color:#AFC3B6">PARTICIPATION</div></div>
+      </div>
+    </div>
+    <div style="flex:1;overflow-y:auto;padding:14px 16px 20px">
+      <div style="background:#fff;border:1px solid #E8E2CF;border-left:4px solid #295C4D;border-radius:16px;padding:14px 15px">
+        <div style="font-size:10px;letter-spacing:.14em;font-weight:800;color:#98917C">NATIONAL HEADLINE</div>
+        <div style="font-size:14px;line-height:1.6;color:#22342C;margin-top:6px;font-style:italic">"Secondary schools report 26% higher stress levels than Primary schools nationwide, driven largely by SBA deadlines and curriculum pacing."</div>
+      </div>
+      <div style="margin-top:12px;background:#fff;border:1px solid #E8E2CF;border-radius:16px;padding:14px 15px">
+        <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-weight:700;font-size:13.5px">Regional data</span><span style="font-size:10.5px;font-weight:700;color:#98917C;background:#F3EFE2;padding:4px 9px;border-radius:99px">Responses by region</span></div>
+        <div style="display:flex;flex-direction:column;gap:9px;margin-top:12px">
+          <sc-for list="{{ natRegions }}" as="r" hint-placeholder-count="5">
+            <div style="display:grid;grid-template-columns:56px 1fr 44px;gap:8px;align-items:center">
+              <span style="font-size:11px;font-weight:700;color:#5A6156;text-align:right">{{ r.label }}</span>
+              <div style="height:12px;background:#F3EFE2;border-radius:5px;overflow:hidden"><div style="height:100%;border-radius:5px;background:{{ r.color }};width:{{ r.w }}"></div></div>
+              <span style="font-size:11px;font-weight:700;color:#98917C">{{ r.val }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      <div style="margin-top:12px;background:#FDF9EF;border:1px solid #EAD9A8;border-radius:14px;padding:11px 14px;font-size:11.5px;color:#8A7A45;line-height:1.5">Aggregated across 42 schools. No school or individual is identifiable below the 20-voice threshold.</div>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ perksOpen }}" hint-placeholder-val="{{ false }}">
+  <div style="position:absolute;inset:0;z-index:44;background:rgba(34,52,44,.4);display:flex;align-items:flex-end">
+    <div style="width:100%;background:#FAF6EC;border-radius:26px 26px 38px 38px;padding:20px 20px 26px;box-sizing:border-box">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div style="font:800 20px 'Bricolage Grotesque',sans-serif;color:#22342C">Teacher Perks</div>
+        <div onClick="{{ closePerks }}" style="cursor:pointer;width:28px;height:28px;border-radius:50%;background:#EDE6D3;display:grid;place-items:center;color:#8A8875;font-size:12px">✕</div>
+      </div>
+      <div style="font-size:12px;color:#98917C;margin-top:4px">Earned by your 12-day pulse streak · thank you for showing up</div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:14px">
+        <sc-for list="{{ perkRows }}" as="p" hint-placeholder-count="4">
+          <div style="background:#fff;border:1px solid #E8E2CF;border-radius:14px;padding:12px 14px;display:flex;align-items:center;gap:11px">
+            <span style="color:#C8A951;font-size:15px">✿</span>
+            <div style="flex:1"><div style="font-weight:700;font-size:13px">{{ p.title }}</div><div style="font-size:11px;color:#98917C;margin-top:2px">{{ p.sub }}</div></div>
+            <span style="font-size:9.5px;font-weight:800;background:#F4EDDA;color:#8A7A45;padding:4px 8px;border-radius:99px">NEW</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ tellOpen }}" hint-placeholder-val="{{ false }}">
+  <div style="position:absolute;inset:0;z-index:40;background:rgba(34,52,44,.4);display:flex;align-items:flex-end">
+    <div style="width:100%;background:#FAF6EC;border-radius:26px 26px 38px 38px;padding:20px 20px 26px;box-sizing:border-box">
+      <sc-if value="{{ tellNotSent }}" hint-placeholder-val="{{ true }}">
+      <div style="font:800 20px 'Bricolage Grotesque',sans-serif;color:#22342C">Tell a leader</div>
+      <div style="font-size:12.5px;color:#6B6F5F;line-height:1.55;margin-top:6px">A quiet channel. Your note goes to <b>your Pastoral Champion</b>, who reads it within 24 hours. It is not an emergency alert.</div>
+      <input value="{{ tellNote }}" onChange="{{ tellChange }}" placeholder="Optional note — what should they know?" style="width:100%;box-sizing:border-box;margin-top:14px;padding:13px 14px;border-radius:13px;border:1.5px solid #E0D9C6;background:#fff;font-size:13.5px;outline:none">
+      <div style="display:flex;gap:9px;margin-top:14px">
+        <div onClick="{{ closeTell }}" style="cursor:pointer;padding:13px 18px;border-radius:13px;border:1.5px solid #E0D9C6;font-weight:700;font-size:13px;color:#8A8875">Cancel</div>
+        <div onClick="{{ sendTell }}" style="cursor:pointer;flex:1;text-align:center;padding:13px;border-radius:13px;background:#6E2B2F;color:#F5E9D8;font-weight:800;font-size:14px">Send to Champion</div>
+      </div>
+      </sc-if>
+      <sc-if value="{{ tellSent }}" hint-placeholder-val="{{ false }}">
+      <div style="text-align:center;padding:8px 6px 4px">
+        <div style="font-size:30px">✓</div>
+        <div style="font:800 19px 'Bricolage Grotesque',sans-serif;color:#295C4D;margin-top:6px">A leader will read this within 24 hours</div>
+        <div style="font-size:12px;color:#98917C;margin-top:6px">Nothing more is needed from you right now.</div>
+        <div onClick="{{ closeTell }}" style="cursor:pointer;margin-top:14px;display:inline-block;padding:11px 24px;border-radius:13px;background:#295C4D;color:#F3EFE2;font-weight:800;font-size:13px">Done</div>
+      </div>
+      </sc-if>
+    </div>
+  </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:440,&quot;height&quot;:880},&quot;splashEnabled&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;},&quot;schoolName&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;St. Joseph's RC Secondary&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;startRole&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;student&quot;,&quot;teacher&quot;,&quot;leader&quot;],&quot;default&quot;:&quot;student&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+class Component extends DCLogic {
+  state = {
+    splash: true, screen: 'today', role: ['student', 'teacher', 'leader'].includes(this.props.startRole) ? this.props.startRole : 'student',
+    banks: {
+      student: [
+        { id: 1, theme: 'Safety', text: 'Did you feel safe in school today?', opts: ['Yes', 'Mostly', 'Not really', 'No'] },
+        { id: 2, theme: 'Belonging', text: 'Did you feel like you belonged here today?', opts: ['Yes', 'Mostly', 'Not really', 'No'] },
+        { id: 3, theme: 'Trusted adult', text: 'Is there an adult here you trust to talk to?', opts: ['Yes', 'Maybe', 'No'] },
+        { id: 4, theme: 'Voice', text: 'Did you feel listened to today?', opts: ['Yes', 'Sometimes', 'No'] },
+        { id: 5, theme: 'Fairness', text: 'Were you treated fairly today?', opts: ['Yes', 'Mostly', 'Not really', 'No'] },
+        { id: 6, theme: 'Peer treatment', text: 'Did another pupil make you feel unsafe or uncomfortable?', opts: ['No', 'A little', 'Yes', 'Prefer not to say'], reverse: true },
+        { id: 7, theme: 'Stress', text: 'How heavy did today feel?', opts: ['Light', 'Okay', 'Heavy', 'Very heavy'], reverse: true },
+        { id: 8, theme: 'Learning', text: "Did today's lessons make sense to you?", opts: ['Mostly', 'Some', 'Hardly', 'Not at all'] },
+        { id: 9, theme: 'Attendance', text: 'How do you feel about coming back tomorrow?', opts: ['Looking forward', 'Okay', 'Unsure', "Don't want to"] },
+        { id: 10, theme: 'Home', text: 'Is something outside school making learning harder right now?', opts: ['No', 'A little', 'Yes', 'Prefer not to say'], reverse: true },
+        { id: 11, theme: 'Participation', text: 'Did you get a fair chance to speak or ask for help today?', opts: ['Yes', 'Mostly', 'No'] },
+        { id: 12, theme: 'Agency', text: 'Is there something you wish adults here understood?', opts: null, weekly: true }
+      ],
+      teacher: [
+        { id: 101, theme: 'SE', text: 'Was your classroom workable today (heat, light, space, supplies)?', opts: ['Not at all', 'Barely', 'Somewhat', 'Mostly', 'Fully'], scale: true },
+        { id: 102, theme: 'R', text: 'How are you, in one word, today?', opts: null },
+        { id: 103, theme: 'D', text: 'Did the lesson land?', opts: ['Not at all', 'Barely', 'Somewhat', 'Mostly', 'Fully'], scale: true },
+        { id: 104, theme: 'R', text: 'Whose voice did you not hear today?', opts: null },
+        { id: 105, theme: 'L', text: 'Did anything happen today that you would want a leader to know?', opts: null, champion: true }
+      ],
+      leader: [
+        { id: 201, theme: 'Attention', text: 'What concern is taking the most leadership attention this week?', opts: ['Safety', 'Attendance', 'Behaviour', 'Learning', 'Wellbeing', 'Staffing', 'Family engagement'], neutral: true },
+        { id: 202, theme: 'Visibility', text: 'Where do you feel your team has the least visibility right now?', opts: null },
+        { id: 203, theme: 'Response', text: 'Are staff responding consistently when pupils raise concerns?', opts: ['Yes', 'Mostly', 'Inconsistently', 'No'] },
+        { id: 204, theme: 'Barriers', text: 'What is preventing earlier pastoral intervention?', opts: ['Time', 'Information', 'Staffing', 'Confidence', 'Communication', 'Unclear responsibility'], neutral: true },
+        { id: 205, theme: 'Action', text: 'What is one thing pupils are telling us that needs a leadership response this week?', opts: null }
+      ]
+    },
+    nextId: 300, qi: 0, answers: {}, submitted: {}, todayAvg: null,
+    pulsesCompleted: { teacher: 9, leader: 12 },
+    mySurveys: { teacher: [], leader: [{ title: 'Break-time supervision check', aud: 'Whole school', qCount: 4, resp: 23 }] },
+    bTitle: '', bAud: 'My class', bNextId: 900, justLaunched: false,
+    bQs: [{ id: 801, text: 'New question — tap to edit', opts: ['Yes', 'Mostly', 'Not really', 'No'] }],
+    trange: '7d', moveTried: false, moveSaved: false,
+    tellOpen: false, tellSent: false, tellNote: '', notif: true,
+    shotIdx: null, natOpen: false, perksOpen: false, feedbackSent: false
+  };
+  componentDidMount() {
+    const on = this.props.splashEnabled ?? true;
+    this._t = setTimeout(() => this.setState({ splash: false }), on ? 2400 : 0);
+  }
+  componentWillUnmount() { clearTimeout(this._t); }
+  activeQs() {
+    const s = this.state;
+    if (s.role !== 'student') return s.banks[s.role];
+    const bank = s.banks.student;
+    if (bank.length <= 5) return bank;
+    const daily = bank.filter(q => !q.weekly);
+    const weekly = bank.filter(q => q.weekly);
+    const day = new Date().getDay();
+    const start = (day * 3) % Math.max(1, daily.length);
+    const rot = daily.slice(start).concat(daily.slice(0, start)).slice(0, weekly.length ? 4 : 5);
+    return day === 5 && weekly.length ? rot.concat([weekly[0]]) : rot.concat(weekly.slice(0, 1)).slice(0, 5);
+  }
+  renderVals() {
+    const THEME_COLORS = {
+      'Safety': '#6E2B2F', 'Belonging': '#8E6FB6', 'Trusted adult': '#295C4D', 'Voice': '#C8A951',
+      'Fairness': '#4A8AD0', 'Peer treatment': '#6E2B2F', 'Stress': '#8E6FB6', 'Learning': '#5BAA70',
+      'Attendance': '#4A8AD0', 'Home': '#98917C', 'Participation': '#C8A951', 'Agency': '#295C4D',
+      'R': '#C8A951', 'L': '#4A8AD0', 'D': '#5BAA70', 'SE': '#8E6FB6',
+      'Attention': '#295C4D', 'Visibility': '#4A8AD0', 'Response': '#5BAA70', 'Barriers': '#8E6FB6', 'Action': '#C8A951'
+    };
+    const s = this.state;
+    const set = (p) => this.setState(p);
+    const role = s.role;
+    const submitted = !!s.submitted[role];
+    const respCount = 165 + (submitted ? 1 : 0);
+    const respLine = respCount + ' voices';
+
+    const qs = this.activeQs();
+    const bankEmpty = qs.length === 0;
+    const done = !bankEmpty && s.qi >= qs.length;
+    const q = qs[Math.min(s.qi, Math.max(0, qs.length - 1))] || { text: '', theme: 'Voice', opts: [] };
+    const isChoice = Array.isArray(q.opts);
+    const ans = s.answers[role + ':' + q.id];
+    const canNext = isChoice ? ans !== undefined : true;
+    const finish = () => {
+      const scored = qs.filter(x => Array.isArray(x.opts) && !x.neutral);
+      const vals = scored.map(x => {
+        const a = s.answers[role + ':' + x.id];
+        if (a === undefined) return null;
+        const n = x.opts.length - 1;
+        const posFirst = !x.scale;
+        let v = posFirst ? (n - a) / n : a / n;
+        if (x.reverse) v = 1 - ((posFirst ? a : n - a) / n);
+        return Math.max(0, Math.min(1, posFirst ? (n - a) / n : a / n));
+      }).filter(v => v !== null);
+      const avg = vals.length ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length * 100) : null;
+      const pc = role === 'student' ? s.pulsesCompleted : { ...s.pulsesCompleted, [role]: (s.pulsesCompleted[role] ?? 0) + 1 };
+      set({ qi: qs.length, submitted: { ...s.submitted, [role]: true }, todayAvg: avg ?? s.todayAvg, pulsesCompleted: pc });
+    };
+
+    const todayVal = s.todayAvg !== null ? Math.round((73 + s.todayAvg) / 2) : 73;
+    const D7 = [64, 66, 61, 69, 71, 68, todayVal];
+    const D30 = [58, 62, 60, 65, 63, 67, 64, 66, 61, 69, 71, todayVal];
+    const TERM = [52, 55, 60, 57, 63, 66, 64, 70, 68, 72, 71, todayVal];
+    const RANGES = { '7d': { data: D7, cap: 'Last 7 school days', start: 'Wed' }, '30d': { data: D30, cap: 'Last 30 days', start: '4 wks ago' }, term: { data: TERM, cap: 'Term 2 to date', start: 'wk 1' } };
+    const R = RANGES[s.trange];
+    const pts = R.data.map((v, i) => ({
+      x: Math.round(12 + i * (306 / (R.data.length - 1))),
+      y: Math.round(Math.max(12, Math.min(98, 105 - (v - 45) * 1.7)))
+    }));
+    const trendPoints = pts.map(p => p.x + ',' + p.y).join(' ');
+
+    const delta = todayVal - D7[5];
+    const PART = [78, 82, 74, 80, 84, 79, submitted ? 86 : 81];
+    const DAYS = ['W', 'T', 'F', 'M', 'T', 'W', 'Td'];
+
+    const ROLES = { student: 'Student · Form 2', teacher: 'Teacher · Form 2', leader: 'Leader · Principal' };
+    const nextRole = { student: 'teacher', teacher: 'leader', leader: 'student' };
+    const nav = [
+      { key: 'today', label: 'Today', icon: '⌂' }, { key: 'trends', label: 'Trends', icon: '∿' },
+      { key: 'pulse', label: 'Pulse', icon: '✿' }, { key: 'hot', label: "What's Hot", icon: '✦' },
+      { key: 'profile', label: 'Profile', icon: '○' }
+    ];
+    const activeKey = s.screen === 'manage' ? 'pulse' : s.screen;
+    const canEdit = role !== 'student';
+    const PROFILE = {
+      student: { name: 'Student F2-104', sub: 'Form 2 · handle, never your name', init: 'F2' },
+      teacher: { name: 'M. Persaud', sub: 'Form teacher · 12-day streak', init: 'MP' },
+      leader: { name: 'Sr. A. Joseph', sub: 'Principal · Pastoral Champion', init: 'AJ' }
+    };
+
+    return {
+      schoolName: this.props.schoolName ?? "St. Joseph's RC Secondary",
+      showSplash: s.splash && (this.props.splashEnabled ?? true),
+      splashPetals: [0, 1, 2, 3, 4, 5].map(i => ({ rot: (i * 60) + 'deg', delay: (i * 0.1) + 's' })),
+      isToday: s.screen === 'today', isPulse: s.screen === 'pulse', isTrends: s.screen === 'trends',
+      isHot: s.screen === 'hot', isProfile: s.screen === 'profile', isManage: s.screen === 'manage',
+      roleStudent: role === 'student', roleTeacher: role === 'teacher', roleLeader: role === 'leader',
+      roleChip: ROLES[role], canEdit,
+      cycleRole: () => { const nr = nextRole[role]; set({ role: nr, qi: 0, screen: nr === 'student' && (s.screen === 'manage' || s.screen === 'builder') ? 'today' : s.screen }); },
+      updatedAt: '3:40 pm', respLine, streak: 6,
+      studentHeroText: submitted ? 'Thank you — your voice was heard today.' : "Five quick questions. Say how today really felt.",
+      studentHeroSub: submitted ? 'Your answers joined 164 other voices. Adults see patterns, never names.' : 'It takes about two minutes. You can skip anything, and "prefer not to say" is always okay.',
+      studentCta: submitted ? 'See or change my answers' : 'Start · Your Voice Today',
+      pulseScore: todayVal,
+      pulseState: delta >= 2 ? 'LIFTING' : delta <= -2 ? 'NEEDS ATTENTION' : 'STEADY',
+      pulseDelta: (delta >= 0 ? '▲ ' : '▼ ') + Math.abs(delta),
+      pulseNote: submitted ? 'Includes your pulse from today ✓' : 'Your pulse is not in yet — it takes two minutes.',
+      sparkBars: D7.map((v, i) => ({ h: Math.round(v * 0.42) + 'px', bg: i === 6 ? '#E9B93B' : 'rgba(243,239,226,.3)' })),
+      landRows: [
+        { label: 'Mostly', pct: '48%', w: '48%', color: '#5BAA70' },
+        { label: 'Some', pct: '29%', w: '29%', color: '#C8A951' },
+        { label: 'Hardly', pct: '15%', w: '15%', color: '#E19A45' },
+        { label: 'Not at all', pct: '8%', w: '8%', color: '#D9634E' }
+      ],
+      triedLabel: s.moveTried ? 'Tried ✓' : 'Mark as tried',
+      triedBg: s.moveTried ? '#295C4D' : '#F4EDDA', triedColor: s.moveTried ? '#F3EFE2' : '#8A7A45',
+      savedLabel: s.moveSaved ? 'Saved ✓' : 'Save',
+      moveTried: () => set({ moveTried: !s.moveTried }),
+      moveSaved: () => set({ moveSaved: !s.moveSaved }),
+      unheard: [
+        { label: 'Form 3 boys', w: '38%', pct: '38%', color: '#D9634E' },
+        { label: 'New transfers', w: '46%', pct: '46%', color: '#E19A45' },
+        { label: 'Form 1', w: '72%', pct: '72%', color: '#5BAA70' },
+        { label: 'Form 5 (SBA term)', w: '54%', pct: '54%', color: '#C8A951' }
+      ],
+      openTell: () => set({ tellOpen: true, tellSent: false }),
+      closeTell: () => set({ tellOpen: false, tellNote: '' }),
+      sendTell: () => set({ tellSent: true }),
+      tellOpen: s.tellOpen, tellSent: s.tellSent, tellNotSent: !s.tellSent,
+      tellNote: s.tellNote, tellChange: (e) => set({ tellNote: e.target.value }),
+      // pulse run
+      bankEmpty, pulseRunning: !bankEmpty && !done, pulseDone: done,
+      pulseTitle: role === 'student' ? 'Your Voice Today' : role === 'teacher' ? 'Daily Pulse' : 'Leader Pulse · weekly',
+      pulseFootnote: role === 'student' ? 'Anonymous · "prefer not to say" is always okay' : role === 'teacher' ? 'Two-minute contract · anonymous by design' : 'Compared with pupil voice, never assumed correct',
+      qLabel: Math.min(s.qi + 1, qs.length) + ' / ' + qs.length,
+      qPct: (done ? 100 : (s.qi / Math.max(1, qs.length)) * 100 + 6) + '%',
+      qText: q.text, qTheme: (q.theme || '').toUpperCase(), qThemeColor: THEME_COLORS[q.theme] || '#295C4D',
+      qIsChoice: !done && !bankEmpty && isChoice, qIsText: !done && !bankEmpty && !isChoice,
+      qOpts: (q.opts || []).map((label, i) => ({
+        label, check: ans === i ? '✓' : '',
+        bg: ans === i ? '#295C4D' : '#fff', border: ans === i ? '#295C4D' : '#E0D9C6',
+        color: ans === i ? '#F3EFE2' : '#22342C',
+        pick: () => set({ answers: { ...s.answers, [role + ':' + q.id]: i } })
+      })),
+      qTextVal: typeof ans === 'string' ? ans : '',
+      qTextChange: (e) => set({ answers: { ...s.answers, [role + ':' + q.id]: e.target.value } }),
+      qPlaceholder: role === 'student' ? 'Only if you want to — a word or a sentence' : 'Type here — a word or a sentence',
+      qTextNote: role === 'student' ? 'Optional. If this signals worry, only your Pastoral Champion reads it.' : 'Free text signalling concern is read by your Pastoral Champion within 24 hours.',
+      qNextLabel: canNext ? (s.qi === qs.length - 1 ? 'Finish' : 'Next →') : 'Pick an answer',
+      qNextBg: canNext ? '#C8A951' : '#EDE6D3', qNextColor: canNext ? '#22342C' : '#98917C',
+      qNext: () => { if (!canNext) return; s.qi === qs.length - 1 ? finish() : set({ qi: s.qi + 1 }); },
+      qBack: () => set({ qi: Math.max(0, s.qi - 1) }),
+      restartPulse: () => set({ qi: 0 }),
+      goToday: () => set({ screen: 'today' }),
+      goPulse: () => set({ screen: 'pulse', qi: 0 }),
+      goManage: () => set({ screen: 'manage' }),
+      doneTitle: role === 'student' ? 'Heard. Thank you.' : role === 'teacher' ? 'Thank you' : 'Logged for the Bridge',
+      doneBody: role === 'student' ? 'Your voice joined ' + (respCount - 1) + ' others today. Adults see patterns, never your name.' : role === 'teacher' ? 'Your voice joined ' + respLine + ' today. It is now collated into Today\'s Insights and Trends.' : 'Your answers will sit beside pupil voice in Friday\'s Bridge digest — comparing perception with experience.',
+      doneCta: role === 'leader' ? 'Back to leadership view' : "See Today's Insights",
+      // trends
+      runCount: respCount,
+      rangeTabs: [{ k: '7d', label: '7 days' }, { k: '30d', label: '30 days' }, { k: 'term', label: 'Term' }].map(t => ({
+        label: t.label, bg: s.trange === t.k ? '#fff' : 'transparent',
+        color: s.trange === t.k ? '#22342C' : '#98917C', pick: () => set({ trange: t.k })
+      })),
+      rangeCaption: R.cap, trendStart: R.start,
+      trendPoints, trendArea: '12,98 ' + trendPoints + ' 318,98',
+      trendDots: pts.map((p, i) => ({ cx: p.x, cy: p.y, r: i === pts.length - 1 ? 4.5 : 2.5, fill: i === pts.length - 1 ? '#C8A951' : '#295C4D' })),
+      partBars: PART.map((v, i) => ({ h: Math.round(v * 0.52) + 'px', label: DAYS[i], bg: i === 6 ? '#C8A951' : '#295C4D' })),
+      domains: [
+        { label: 'Safety & peers', v: 67, d: -3 }, { label: 'Belonging', v: 72, d: 4 },
+        { label: 'Trusted adults', v: 61, d: 1 }, { label: 'Emotional load', v: 58, d: -2 },
+        { label: 'Engagement', v: 70, d: 2 }, { label: 'Learning', v: 64, d: 0 },
+        { label: 'Voice & fairness', v: 69, d: 5 }, { label: 'Home context', v: 62, d: -1 }
+      ].map(d => ({
+        label: d.label, w: d.v + '%',
+        color: d.v < 60 ? '#D9634E' : d.v < 68 ? '#C8A951' : '#5BAA70',
+        delta: (d.d > 0 ? '▲' : d.d < 0 ? '▼' : '·') + Math.abs(d.d),
+        deltaColor: d.d > 0 ? '#417E52' : d.d < 0 ? '#B04A38' : '#98917C'
+      })),
+      themes: [
+        { label: 'Break-time safety (Forms 2–3)', sub: 'Safety · 44 mentions', w: '84%', color: '#D9634E' },
+        { label: 'SBA pressure', sub: 'Learning pressure · 36 mentions', w: '68%', color: '#C8A951' },
+        { label: 'Buddy scheme lifting belonging', sub: 'Positive signal · 29 mentions', w: '55%', color: '#5BAA70' }
+      ],
+      hotCards: [
+        { cat: 'SAFETY & PEERS', heat: '92% heat', heatColor: '#D9634E', title: 'Break-time hotspots', body: 'Pupils in Forms 2–3 report feeling least safe around break times, near the back corridor.', bar: 'linear-gradient(90deg,#E19A45,#D9634E)', why: 'Surfaced: rising 3 weeks · 20+ voices · matches leader Pulse concern' },
+        { cat: 'LEARNING PRESSURE', heat: '74% heat', heatColor: '#C8A951', title: 'SBA stress climbing', body: 'Form 5 pupils reporting heavy days doubled since the SBA window opened.', bar: 'linear-gradient(90deg,#C8A951,#E19A45)', why: 'Surfaced: new this fortnight · seasonal pattern likely' },
+        { cat: 'POSITIVE SIGNAL', heat: 'steady', heatColor: '#5BAA70', title: 'Buddy scheme working', body: '"Someone made my day better" is up 11 points among Form 1 since buddies launched.', bar: '#5BAA70', why: 'Surfaced: consistent 5 weeks · worth sharing on the Bridge' }
+      ].map((h, i) => ({ ...h, openShot: () => set({ shotIdx: i }) })),
+      // micro-learning shot
+      shotOpen: s.shotIdx !== null,
+      closeShot: () => set({ shotIdx: null }),
+      shotTitle: s.shotIdx !== null ? ['Break-time hotspots', 'SBA stress climbing', 'Buddy scheme working'][s.shotIdx] : '',
+      shotConcept: s.shotIdx !== null ? [
+        'Pupils feel least safe where adult presence is thinnest. Visibility, not surveillance, is what changes how a corridor feels.',
+        'SBA pressure spikes are seasonal and predictable. Naming the pressure out loud reduces the shame of struggling with it.',
+        'Belonging grows fastest through one reliable peer connection — structure creates the chance, warmth does the rest.'
+      ][s.shotIdx] : '',
+      shotTry: s.shotIdx !== null ? [
+        'Stand at the back corridor for the first five minutes of break with a cup of tea. Presence, not patrol.',
+        'Open one class with: "SBA season is heavy for everyone — what is one thing that would make this week lighter?"',
+        'Ask one buddy pair to show a new pupil their favourite spot in school this week.'
+      ][s.shotIdx] : '',
+      shotResearchLocal: s.shotIdx !== null ? [
+        'T&T: Ministry of Education school-safety reviews and UWI St. Augustine studies consistently locate peer incidents in low-supervision spaces (corridors, stairwells, back yards) at unstructured times.',
+        'T&T: UWI School of Education research in Caribbean Curriculum documents SBA workload as a leading stressor for CSEC students and teachers during the submission window.',
+        'T&T: local transition studies report Form 1 pupils naming "one friend who knows my name" as the strongest predictor of settling in by end of first term.'
+      ][s.shotIdx] : '',
+      shotResearchWider: s.shotIdx !== null ? [
+        'Wider: Astor & Benbenishty\'s school-violence research shows most incidents cluster in "unowned" spaces — and that visible, relational adult presence (not patrols) reduces them.',
+        'Wider: test-anxiety research (e.g. Putwain) finds that normalising pressure and breaking work into named, small steps measurably lowers assessment stress.',
+        'Wider: EEF evidence on peer mentoring shows structured buddy schemes reliably improve belonging and attendance, with the largest gains for new and transitioning pupils.'
+      ][s.shotIdx] : '',
+      // national report
+      natOpen: s.natOpen, openNat: () => set({ natOpen: true }), closeNat: () => set({ natOpen: false }),
+      natRegions: [
+        { label: 'North', v: 3480 }, { label: 'Central', v: 4120 }, { label: 'South', v: 2890 },
+        { label: 'East', v: 1440 }, { label: 'Tobago', v: 520 }
+      ].map(r => ({ label: r.label, val: (r.v / 1000).toFixed(1) + 'k', w: Math.round(r.v / 4120 * 100) + '%', color: r.label === 'Tobago' ? '#5BAA70' : '#295C4D' })),
+      // perks & feedback
+      perksOpen: s.perksOpen, openPerks: () => set({ perksOpen: true }), closePerks: () => set({ perksOpen: false }),
+      perkRows: [
+        { title: 'CXC / SBA marking toolkit', sub: 'Free download · rubric templates + timers' },
+        { title: '2GB data top-up', sub: 'For your 10-day pulse streak · any local carrier' },
+        { title: 'NALIS extended borrowing', sub: 'Teacher pass · 6 items, 6 weeks' },
+        { title: 'Wellness Wednesday voucher', sub: 'Early-close cover for one afternoon this term' }
+      ],
+      feedbackLabel: s.feedbackSent ? 'Feedback sent — thank you ✓' : 'Send feedback',
+      sendFeedback: () => set({ feedbackSent: !s.feedbackSent }),
+      // manage
+      manageTitle: role === 'leader' ? 'Leader Pulse questions' : 'Carousel questions',
+      manageSub: role === 'student' ? '' : 'Changes update the carousel instantly',
+      manageNote: role === 'leader' ? 'Five decision-oriented questions, weekly. Tap the type chip to switch choice / free text.' : 'Bloom rotates 3–5 questions per pupil per day from this bank; the reflection question appears weekly. Tap the type chip to switch choice / free text.',
+      qRows: (role === 'student' ? s.banks.student : s.banks[role]).map((it, idx) => {
+        const bank = s.banks[role];
+        const upd = (patch) => { const c = bank.slice(); c[idx] = { ...it, ...patch }; set({ banks: { ...s.banks, [role]: c }, qi: 0 }); };
+        return {
+          text: it.text, theme: (it.theme || '').toUpperCase(), themeColor: THEME_COLORS[it.theme] || '#295C4D',
+          type: Array.isArray(it.opts) ? 'Choice · ' + it.opts.length : 'Free text',
+          rotated: it.weekly ? 'weekly' : '',
+          optsLine: Array.isArray(it.opts) ? it.opts.join(' / ') : 'Open response — optional for pupils',
+          edit: (e) => upd({ text: e.target.value }),
+          toggleType: () => upd({ opts: Array.isArray(it.opts) ? null : ['Yes', 'Mostly', 'Not really', 'No'] }),
+          remove: () => set({ banks: { ...s.banks, [role]: bank.filter((_, j) => j !== idx) }, qi: 0 })
+        };
+      }),
+      addQ: () => set({ banks: { ...s.banks, [role]: [...s.banks[role], { id: s.nextId, theme: role === 'leader' ? 'Action' : 'Voice', text: 'New question — tap to edit', opts: ['Yes', 'Mostly', 'Not really', 'No'] }] }, nextId: s.nextId + 1 }),
+      // survey builder (unlock after 10 pulses, teachers & schools)
+      isBuilder: s.screen === 'builder',
+      goBuilder: () => set({ screen: 'builder', justLaunched: false }),
+      builderLocked: s.screen === 'builder' && !((s.pulsesCompleted[role] ?? 0) >= 10 && role !== 'student'),
+      builderOpen: s.screen === 'builder' && (s.pulsesCompleted[role] ?? 0) >= 10 && role !== 'student',
+      builderPct: Math.min(100, (s.pulsesCompleted[role] ?? 0) / 10 * 100) + '%',
+      builderProgressLabel: (s.pulsesCompleted[role] ?? 0) >= 10 ? 'Unlocked ✓' : Math.min(10, s.pulsesCompleted[role] ?? 0) + ' of 10 pulses completed',
+      builderRemaining: Math.max(0, 10 - (s.pulsesCompleted[role] ?? 0)) + (10 - (s.pulsesCompleted[role] ?? 0) === 1 ? ' pulse' : ' pulses'),
+      builderCardSub: (s.pulsesCompleted[role] ?? 0) >= 10 ? 'Turn your idea into a live pulse for your class or school. Results collate in Trends within 24 hours.' : 'Build and launch your own pulses. Unlocks after 10 completed pulses — keep answering.',
+      builderCardCta: (s.pulsesCompleted[role] ?? 0) >= 10 ? 'Open →' : Math.max(0, 10 - (s.pulsesCompleted[role] ?? 0)) + ' to go',
+      justLaunched: s.justLaunched,
+      hasSurveys: (s.mySurveys[role] || []).length > 0,
+      mySurveyRows: (s.mySurveys[role] || []).map(m => ({ title: m.title, sub: m.aud + ' · ' + m.qCount + ' questions · ' + m.resp + ' responses' })),
+      bTitle: s.bTitle, bTitleChange: (e) => set({ bTitle: e.target.value, justLaunched: false }),
+      audChips: ['My class', 'Whole school', 'Staff'].map(a => ({
+        label: a,
+        bg: s.bAud === a ? '#295C4D' : '#fff', color: s.bAud === a ? '#F3EFE2' : '#5A6156',
+        border: s.bAud === a ? '#295C4D' : '#E0D9C6', pick: () => set({ bAud: a })
+      })),
+      bQCount: s.bQs.length,
+      bQRows: s.bQs.map((it, idx) => ({
+        text: it.text,
+        type: Array.isArray(it.opts) ? 'Choice · ' + it.opts.length : 'Free text',
+        optsLine: Array.isArray(it.opts) ? it.opts.join(' / ') : 'Open response — optional',
+        edit: (e) => { const c = s.bQs.slice(); c[idx] = { ...it, text: e.target.value }; set({ bQs: c }); },
+        toggleType: () => { const c = s.bQs.slice(); c[idx] = { ...it, opts: Array.isArray(it.opts) ? null : ['Yes', 'Mostly', 'Not really', 'No'] }; set({ bQs: c }); },
+        remove: () => set({ bQs: s.bQs.filter((_, j) => j !== idx) })
+      })),
+      addBQ: () => set({ bQs: [...s.bQs, { id: s.bNextId, text: 'New question — tap to edit', opts: ['Yes', 'Mostly', 'Not really', 'No'] }], bNextId: s.bNextId + 1 }),
+      launchLabel: s.bTitle.trim() && s.bQs.length ? 'Launch survey →' : 'Add a title and a question',
+      launchBg: s.bTitle.trim() && s.bQs.length ? '#C8A951' : '#EDE6D3',
+      launchColor: s.bTitle.trim() && s.bQs.length ? '#22342C' : '#98917C',
+      launchSurvey: () => {
+        if (!(s.bTitle.trim() && s.bQs.length)) return;
+        const mine = s.mySurveys[role] || [];
+        set({
+          mySurveys: { ...s.mySurveys, [role]: [{ title: s.bTitle.trim(), aud: s.bAud, qCount: s.bQs.length, resp: 0 }, ...mine] },
+          bTitle: '', bQs: [{ id: s.bNextId, text: 'New question — tap to edit', opts: ['Yes', 'Mostly', 'Not really', 'No'] }],
+          bNextId: s.bNextId + 1, justLaunched: true
+        });
+      },
+      // profile
+      profileName: PROFILE[role].name, profileSub: PROFILE[role].sub, initials: PROFILE[role].init,
+      notifBg: s.notif ? '#295C4D' : '#D8D2C0', notifLeft: s.notif ? '19px' : '3px',
+      toggleNotif: () => set({ notif: !s.notif }),
+      navItems: nav.map(n => ({
+        label: n.label, icon: n.icon,
+        color: activeKey === n.key ? '#295C4D' : '#A8A18B',
+        weight: activeKey === n.key ? 800 : 600,
+        pick: () => set({ screen: n.key })
+      }))
+    };
+  }
+}
+</script>
+</body>
+</html>
