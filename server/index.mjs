@@ -1,3 +1,7 @@
+import { existsSync } from 'node:fs'
+import { dirname, join, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
+import express from 'express'
 import { openDb } from './db.mjs'
 import { createApp, escalateOverdueAlerts, seed } from './app.mjs'
 import { createDevDeliveryAdapter } from './notify.mjs'
@@ -20,7 +24,18 @@ setInterval(() => {
 }, SWEEP_MS).unref()
 escalateOverdueAlerts(db, adapter)
 
+// Single-host deploy: when a production build exists, serve the SPA from the
+// same origin as the API. That keeps the httpOnly SameSite=Lax session cookie
+// first-party, so no CORS or cross-site cookie configuration is needed.
+const dist = resolve(dirname(fileURLToPath(import.meta.url)), '..', 'dist')
+if (existsSync(dist)) {
+  app.use(express.static(dist, { index: false, maxAge: '1h' }))
+  app.get(/^\/(?!api\/).*/, (_req, res) => res.sendFile(join(dist, 'index.html')))
+  console.log('[bloom] serving SPA from', dist)
+}
+
 const port = Number(process.env.PORT ?? 8787)
-app.listen(port, () => {
-  console.log(`[bloom] API listening on :${port}`)
+const host = process.env.HOST ?? '0.0.0.0'
+app.listen(port, host, () => {
+  console.log(`[bloom] listening on ${host}:${port}`)
 })

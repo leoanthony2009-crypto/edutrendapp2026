@@ -1,0 +1,25 @@
+# Bloom API (and, on this single service, the built SPA too).
+# Deploy: Render → New → Blueprint → point at this repo.
+services:
+  - type: web
+    name: bloom-api
+    runtime: node
+    plan: free
+    buildCommand: npm ci && npm run build
+    startCommand: node server/index.mjs
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: NODE_ENV
+        value: production
+      - key: BLOOM_DB
+        value: /var/data/bloom.sqlite
+      # Seeds the two demo schools + pilot accounts on first boot.
+      # Set to 0 once real accounts are provisioned.
+      - key: BLOOM_SEED
+        value: "1"
+    disk:
+      name: bloom-data
+      mountPath: /var/data
+      sizeGB: 1
