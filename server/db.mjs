@@ -1,4 +1,3 @@
-import Database from 'better-sqlite3'
 import { randomBytes } from 'node:crypto'
 import { mkdirSync } from 'node:fs'
 import { dirname } from 'node:path'
@@ -194,6 +193,29 @@ BEFORE DELETE ON alert_events
 BEGIN SELECT RAISE(ABORT, 'alert_events is immutable'); END;
 `
 
+/**
+ * SQLite driver resolution.
+ *
+ * Prefers Node's built-in `node:sqlite` (Node >=22.5): no native build step,
+ * so the API deploys to hosts that block npm install scripts — a real
+ * failure we hit on Vercel, where better-sqlite3's node-gyp rebuild was
+ * skipped and the binding never existed.
+ *
+ * `better-sqlite3` remains an optional fallback for older runtimes. The two
+ * are interchangeable for everything this server does (exec, prepare,
+ * get/all/run, close, and RAISE(ABORT) triggers) — asserted by
+ * server/__tests__/driver.test.mjs so the fallback cannot silently diverge.
+ */
+const createDatabase = await (async () => {
+  try {
+    const { DatabaseSync } = await import('node:sqlite')
+    return (path) => new DatabaseSync(path)
+  } catch {
+    const { default: Database } = await import('better-sqlite3')
+    return (path) => new Database(path)
+  }
+})()
+
 export function openDb(path = process.env.BLOOM_DB ?? 'data/bloom.sqlite') {
   if (path !== ':memory:') {
     try {
@@ -202,7 +224,7 @@ export function openDb(path = process.env.BLOOM_DB ?? 'data/bloom.sqlite') {
       /* cwd-relative file */
     }
   }
-  const db = new Database(path)
+  const db = createDatabase(path)
   db.exec(SCHEMA)
   db.exec(AUDIT_TRIGGERS)
   return db

@@ -20,5 +20,13 @@ export default defineConfig({
     setupFiles: ['./src/test/setup.ts'],
     css: false,
     exclude: ['e2e/**', 'node_modules/**', 'dist/**'],
+    // Frontend tests boot the real API server in-process. Those server
+    // modules are plain Node ESM and must be loaded natively rather than
+    // bundled — Vite cannot bundle the node:sqlite builtin they depend on.
+    server: {
+      deps: {
+        external: [/\/server\/.*\.mjs$/],
+      },
+    },
   },
 })

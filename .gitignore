@@ -24,7 +24,7 @@ dist-ssr
 *.sw?
 
 # local databases
-data/
+/data/
 *.sqlite
 *.sqlite-journal
 *.sqlite-wal
