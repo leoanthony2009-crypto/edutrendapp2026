@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { ApiError } from '../services/api'
 import { BloomLogo } from '../components/BloomLogo'
 import { PrimaryButton } from '../components/ui'
 import { useAppStore } from '../store/AppStore'
@@ -29,8 +30,19 @@ export function Login() {
     setError(null)
     try {
       await login(schoolCode.trim(), userCode.trim(), passcode)
-    } catch {
-      setError('That school, code or passcode was not recognised. Check the card your school gave you.')
+    } catch (err) {
+      // Distinguish a genuine credential rejection from a service problem.
+      // Reporting every failure as "not recognised" sends people hunting for
+      // a wrong passcode when the server is actually unreachable or broken.
+      if (err instanceof ApiError && err.status === 401) {
+        setError('That school, code or passcode was not recognised. Check the card your school gave you.')
+      } else if (err instanceof ApiError && err.status === 429) {
+        setError('Too many attempts on this account. Wait a few minutes and try again.')
+      } else if (err instanceof ApiError) {
+        setError(`Bloom could not reach the sign-in service (error ${err.status}: ${err.message}). This is not your passcode — try again shortly.`)
+      } else {
+        setError('Bloom could not reach the sign-in service. Check your connection and try again.')
+      }
     } finally {
       setBusy(false)
     }

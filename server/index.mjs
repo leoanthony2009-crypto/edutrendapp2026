@@ -10,7 +10,7 @@ const db = openDb()
 if (process.env.BLOOM_SEED === '1' || process.env.NODE_ENV !== 'production') seed(db)
 
 const adapter = createDevDeliveryAdapter(db)
-const app = createApp(db, { deliveryAdapter: adapter })
+const app = createApp(db, { deliveryAdapter: adapter, ephemeral: (process.env.BLOOM_DB ?? '') === ':memory:' })
 
 // Server-side 24h SLA monitoring — safeguarding never depends on the app
 // being open (audit P0-3). Sweep every 5 minutes.

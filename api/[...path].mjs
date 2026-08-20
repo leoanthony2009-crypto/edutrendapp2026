@@ -26,7 +26,7 @@ function boot() {
   const db = openDb(':memory:')
   seed(db)
   const adapter = createDevDeliveryAdapter(db, { quiet: true })
-  cached = createApp(db, { deliveryAdapter: adapter })
+  cached = createApp(db, { deliveryAdapter: adapter, ephemeral: true })
   return cached
 }
 

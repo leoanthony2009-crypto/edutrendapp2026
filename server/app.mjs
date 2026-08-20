@@ -36,10 +36,20 @@ import { mountExtra } from './routes-extra.mjs'
 const CHAMPION_OUTCOMES = ['spoke_with_pupil', 'parent_contact', 'safeguarding_referral', 'no_further_action']
 const WATCH_ACTIONS = ['Reviewed', 'Parent contact', 'Safeguarding']
 
-export function createApp(db, { deliveryAdapter } = {}) {
+export function createApp(db, { deliveryAdapter, ephemeral = false } = {}) {
   const adapter = deliveryAdapter ?? createDevDeliveryAdapter(db, { quiet: process.env.NODE_ENV === 'test' })
   const app = express()
-  app.use(express.json({ limit: '256kb' }))
+
+  // Some hosts — Vercel's Node runtime among them — parse the JSON body
+  // before the request reaches Express and leave the stream consumed.
+  // Running express.json() again then yields an empty body, which surfaces
+  // as a bogus "credentials not recognised" rather than an obvious error.
+  // Parse only when the body has not already been supplied.
+  const parseJson = express.json({ limit: '256kb' })
+  app.use((req, res, next) => {
+    if (req.body !== undefined && req.body !== null) return next()
+    parseJson(req, res, next)
+  })
 
   // Light CSRF guard: state-changing requests must carry the app header
   // (SameSite=Lax cookies + this header block cross-site form/img requests).
@@ -53,6 +63,19 @@ export function createApp(db, { deliveryAdapter } = {}) {
   const auth = requireAuth(db)
 
   app.get('/api/health', (_req, res) => res.json({ ok: true }))
+
+  /**
+   * Public deployment facts. `ephemeral` is derived from the actual backing
+   * store, so the client's "Demo build" banner follows the deployment's real
+   * behaviour rather than a build-time flag someone could forget to set.
+   */
+  app.get('/api/meta', (_req, res) =>
+    res.json({
+      ephemeral: Boolean(ephemeral),
+      schools: db.prepare('SELECT COUNT(*) AS n FROM schools').get().n,
+      accounts: db.prepare('SELECT COUNT(*) AS n FROM users').get().n,
+    })
+  )
 
   /* ── Auth ── */
 
