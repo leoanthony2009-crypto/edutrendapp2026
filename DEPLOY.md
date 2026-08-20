@@ -60,6 +60,18 @@ The SPA fallback rule must stay **after** the `/api` rule; Netlify matches in fi
 
 ---
 
+## Option C — Vercel (demo only, ephemeral)
+
+`vercel.json` and `api/[...path].mjs` are configured, and `VITE_BLOOM_DEMO=1` is baked into the build env so the deployment always carries a **"Demo build"** banner. Vercel has no persistent disk: data resets on cold start, concurrent instances diverge, and the 24-hour SLA sweep does not run. Fine for showing people the app; not for a pilot.
+
+Vercel project creation needs a team role that can create projects (Owner/Admin) — a Member/Contributor token gets `403 forbidden`. To set it up:
+
+1. Vercel → **Add New → Project → Import Git Repository** → `leoanthony2009-crypto/edutrendapp2026`.
+2. **Set the production branch to `claude/bloom-app-scaffold-build-6smu3s`** (Settings → Git), or merge that branch to `main` first — the app does not exist on `main`.
+3. Deploy. `vercel.json` supplies build command, output directory, function budget, rewrites and the demo flag; nothing needs entering by hand.
+
+---
+
 ## Demo accounts (seeded when `BLOOM_SEED=1`)
 
 School code `STJ` — passcode pattern is `petal-<code>`:
