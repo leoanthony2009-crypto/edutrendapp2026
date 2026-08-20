@@ -30,3 +30,7 @@ data/
 *.sqlite-wal
 *.sqlite-shm
 .e2e-bloom.sqlite*
+
+# playwright artifacts
+test-results/
+playwright-report/
