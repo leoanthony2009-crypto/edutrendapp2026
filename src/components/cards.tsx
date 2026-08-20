@@ -1,15 +1,16 @@
 import { Link } from 'react-router-dom'
-import type { ReactNode } from 'react'
-import type { Role } from '../types/survey'
 import { useAppStore } from '../store/AppStore'
 import { ProgressBar } from './ui'
 
 export const UNLOCK_TARGET = 10
 
-/** Survey Builder promo card on teacher/leader Today — shows unlock progress. */
-export function SurveyBuilderPromoCard({ role }: { role: Role }) {
-  const { pulsesCompleted } = useAppStore()
-  const done = pulsesCompleted[role] ?? 0
+/**
+ * Survey Builder promo card on teacher/leader Today. Unlock progress derives
+ * from the server-side count of real completed pulses.
+ */
+export function SurveyBuilderPromoCard() {
+  const { today } = useAppStore()
+  const done = today?.pulsesCompleted ?? 0
   const unlocked = done >= UNLOCK_TARGET
   const remaining = Math.max(0, UNLOCK_TARGET - done)
   return (
@@ -22,7 +23,7 @@ export function SurveyBuilderPromoCard({ role }: { role: Role }) {
       <div className="mt-2 font-display text-lg font-extrabold">Launch your own survey</div>
       <p className="mt-1 text-xs leading-relaxed text-on-dark-soft">
         {unlocked
-          ? 'Turn your idea into a live pulse for your class or school. Results collate in Trends within 24 hours.'
+          ? 'Turn your idea into a live pulse for your class or school, with real results as voices arrive.'
           : 'Build and launch your own pulses. Unlocks after 10 completed pulses — keep answering.'}
       </p>
       <ProgressBar
@@ -35,28 +36,8 @@ export function SurveyBuilderPromoCard({ role }: { role: Role }) {
       />
       <div className="mt-1.5 flex justify-between text-[11px] text-on-dark-soft">
         <span>{unlocked ? 'Unlocked ✓' : `${Math.min(done, UNLOCK_TARGET)} of ${UNLOCK_TARGET} pulses completed`}</span>
-        <span className="font-extrabold text-bloom-gold-bright">{unlocked ? 'Open →' : `${remaining} to go`}</span>
+        <span className="font-extrabold text-bloom-gold-soft">{unlocked ? 'Open →' : `${remaining} to go`}</span>
       </div>
     </Link>
-  )
-}
-
-/** "Worth noticing" connected-signal card — purple accent, never diagnoses. */
-export function WorthNoticingCard({ body, chips }: { body: ReactNode; chips: Array<{ label: string; muted?: boolean }> }) {
-  return (
-    <section aria-label="Worth noticing" className="rounded-card border border-[#DCD3E8] bg-white p-4">
-      <div className="micro-label text-mark-selfemptying">Worth noticing</div>
-      <p className="mt-1.5 text-[13px] leading-relaxed text-[#4A4636]">{body}</p>
-      <div className="mt-2.5 flex flex-wrap gap-1.5">
-        {chips.map((chip) => (
-          <span
-            key={chip.label}
-            className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${chip.muted ? 'bg-bloom-cream-dim text-ink-meta' : 'bg-[#F1ECF7] text-[#6E548D]'}`}
-          >
-            {chip.label}
-          </span>
-        ))}
-      </div>
-    </section>
   )
 }

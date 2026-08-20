@@ -1,7 +1,7 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react'
 import { CloudOff, Flower2 } from 'lucide-react'
 import { SYNODAL_MARKS, type SynodalMark } from '../types/synodal'
-import { THEME_COLORS } from '../data/questionBanks'
+import { THEME_COLORS } from '../data/themes'
 
 /* ── Cards ─────────────────────────────────────────────────────────────── */
 
@@ -80,6 +80,14 @@ export function ThemeBadge({ theme }: { theme: string }) {
   )
 }
 
+/** Deep badge backgrounds — ≥4.5:1 with white text (audit P1-1). */
+const MARK_BADGE_COLORS: Record<SynodalMark, string> = {
+  R: '#8A7325',
+  L: '#2F5F96',
+  D: '#3D7A50',
+  SE: '#6E5494',
+}
+
 export function MarkBadge({ mark, size = 'sm' }: { mark: SynodalMark; size?: 'sm' | 'md' }) {
   const cfg = SYNODAL_MARKS[mark]
   const dims = size === 'sm' ? 'px-1.5 py-0.5 text-[10px]' : 'px-2 py-1 text-xs'
@@ -88,7 +96,7 @@ export function MarkBadge({ mark, size = 'sm' }: { mark: SynodalMark; size?: 'sm
       title={`${cfg.label} — ${cfg.description}`}
       aria-label={`Synodal mark: ${cfg.label}`}
       className={`inline-flex items-center justify-center rounded font-bold text-white uppercase ${dims}`}
-      style={{ backgroundColor: cfg.color }}
+      style={{ backgroundColor: MARK_BADGE_COLORS[mark] }}
     >
       {mark}
     </span>

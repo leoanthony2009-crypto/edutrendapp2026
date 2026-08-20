@@ -1,19 +1,29 @@
 import { useState } from 'react'
-import type { OneChildEntry } from '../types/survey'
-import { looksLikeRealName } from '../services/champion'
 import { Card, PrimaryButton } from './ui'
 
 /**
  * One Child anchor (spec § 3.2) — a guarded input that never accepts a real
- * name. Offered after the teacher's Daily Pulse; entirely optional.
+ * name. The same validator runs server-side; this client copy gives instant
+ * feedback. Offered after the teacher's Daily Pulse; entirely optional.
  */
-export function OneChildEntryForm({ onSubmit, onSkip }: { onSubmit: (e: OneChildEntry) => void; onSkip: () => void }) {
+function looksLikeRealName(s: string): boolean {
+  return /^[A-Z][a-z]{2,}(\s[A-Z][a-z]{2,})?$/.test(s.trim())
+}
+
+export function OneChildEntryForm({
+  onSubmit,
+  onSkip,
+}: {
+  onSubmit: (entry: { yearGroup: string; handle: string; notedFor: string }) => Promise<void>
+  onSkip: () => void
+}) {
   const [yearGroup, setYearGroup] = useState('')
   const [handle, setHandle] = useState('')
   const [notedFor, setNotedFor] = useState('')
   const [warning, setWarning] = useState<string | null>(null)
+  const [busy, setBusy] = useState(false)
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (looksLikeRealName(handle) || looksLikeRealName(notedFor)) {
       setWarning('Use a handle (e.g. Y4-073), not a name. The Pulse is anonymised by design.')
       return
@@ -22,13 +32,14 @@ export function OneChildEntryForm({ onSubmit, onSkip }: { onSubmit: (e: OneChild
       setWarning('Add the year group and an anonymised handle (e.g. F2 and 073).')
       return
     }
-    onSubmit({
-      pupilHandle: `${yearGroup.trim()}-${handle.trim()}`,
-      yearGroup: yearGroup.trim(),
-      notedFor: notedFor.trim().slice(0, 120),
-      submittedBy: 'teacher-demo',
-      submittedAt: new Date().toISOString(),
-    })
+    setBusy(true)
+    try {
+      await onSubmit({ yearGroup: yearGroup.trim(), handle: handle.trim(), notedFor: notedFor.trim().slice(0, 120) })
+    } catch {
+      setWarning('That could not be saved — check the handle format and try again.')
+    } finally {
+      setBusy(false)
+    }
   }
 
   return (
@@ -74,8 +85,8 @@ export function OneChildEntryForm({ onSubmit, onSkip }: { onSubmit: (e: OneChild
         </p>
       ) : null}
       <div className="mt-3 flex items-center gap-2.5">
-        <PrimaryButton onClick={handleSubmit} className="text-[13px]">
-          Note this child
+        <PrimaryButton onClick={handleSubmit} disabled={busy} className="text-[13px]">
+          {busy ? 'Saving…' : 'Note this child'}
         </PrimaryButton>
         <button onClick={onSkip} className="min-h-11 px-2 text-xs font-bold text-ink-meta underline underline-offset-2">
           Skip

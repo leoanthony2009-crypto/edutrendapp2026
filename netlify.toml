@@ -1,0 +1,37 @@
+# Netlify hosts the Bloom SPA. The API (Express + SQLite) runs on a Node host
+# with a persistent disk — see render.yaml / DEPLOY.md — because Bloom's
+# safeguarding records, sessions and anonymity thresholds need real
+# server-side enforcement and durable storage.
+#
+# The /api proxy below is deliberate: Netlify forwards those requests
+# server-side, so the browser only ever sees one origin. That keeps the
+# httpOnly, SameSite=Lax session cookie first-party and needs no CORS.
+#
+# Set BLOOM_API_ORIGIN in Netlify (Site settings → Environment variables),
+# e.g. https://bloom-api.onrender.com — no trailing slash.
+
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+[[redirects]]
+  from = "/api/*"
+  to = "${BLOOM_API_ORIGIN}/api/:splat"
+  status = 200
+  force = true
+
+# SPA fallback — must come after the API rule.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"

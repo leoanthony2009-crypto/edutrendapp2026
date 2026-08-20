@@ -1,9 +1,9 @@
-/* Bloom service worker — app-shell cache + offline fallback.
- * Persistence is local-first (localStorage), so the app works fully offline
- * once the shell is cached. Network-backed writes (future API) should queue
- * through src/services/offlineQueue.ts and replay on 'sync'/'online'.
+/* Bloom service worker — app-shell cache + offline fallback. API requests
+ * always go to the network (never cached — they carry per-user data); the
+ * shell renders offline and screens show their retry states until the
+ * school server is reachable again.
  */
-const CACHE = 'bloom-shell-v1';
+const CACHE = 'bloom-shell-v2';
 const SHELL = ['/', '/index.html', '/manifest.webmanifest', '/bloom-icon.svg'];
 
 self.addEventListener('install', (event) => {
@@ -28,6 +28,7 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   if (request.method !== 'GET') return;
   const url = new URL(request.url);
+  if (url.pathname.startsWith('/api/')) return; // never cache API data
 
   // Navigation requests: network-first, fall back to cached shell for offline.
   if (request.mode === 'navigate') {
