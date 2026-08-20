@@ -4,6 +4,7 @@ import { ShieldQuestion } from 'lucide-react'
 import { AppStoreProvider, useAppStore } from './store/AppStore'
 import { AppShell } from './components/AppShell'
 import { BloomSplash } from './components/BloomSplash'
+import { DemoBanner } from './components/DemoBanner'
 import { ErrorState, ScreenSkeleton } from './components/ui'
 import { Login } from './screens/Login'
 import { Today } from './screens/Today'
@@ -57,6 +58,7 @@ function Shell() {
   return (
     <>
       {!splashSeen ? <BloomSplash onDone={markSplashSeen} /> : null}
+      <DemoBanner />
       {!authReady ? (
         <ScreenSkeleton />
       ) : me === null ? (
