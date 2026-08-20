@@ -14,6 +14,13 @@
  * That is why the UI carries a "Demo build" banner. For a pilot with real
  * pupils use a Node host with a persistent volume — see render.yaml and
  * DEPLOY.md.
+ *
+ * ROUTING: this file is deliberately NOT named `[...path].mjs`. Vercel
+ * inferred that filename as a *single*-segment dynamic route, so `/api/meta`
+ * reached Express while `/api/auth/login` was rejected with a platform-level
+ * 404 before the function ever ran — which broke sign-in on the deployed
+ * build while every local test passed. Routing is now stated explicitly as a
+ * rewrite in vercel.json rather than inferred from a filename.
  */
 import { openDb } from '../server/db.mjs'
 import { createApp, seed } from '../server/app.mjs'
@@ -30,6 +37,23 @@ function boot() {
   return cached
 }
 
+/**
+ * The vercel.json rewrite carries the real path in `__path` because a rewrite
+ * destination replaces the URL the function sees. Restore it so Express routes
+ * on the path the client actually asked for. When the platform preserves the
+ * original URL (local runs, or a direct hit on /api/index) there is no `__path`
+ * and the request is passed through untouched.
+ */
+export function restorePath(rawUrl) {
+  const url = new URL(rawUrl, 'http://bloom.local')
+  const path = url.searchParams.get('__path')
+  if (path === null) return rawUrl
+  url.searchParams.delete('__path')
+  const qs = url.searchParams.toString()
+  return `/api/${path}${qs ? `?${qs}` : ''}`
+}
+
 export default function handler(req, res) {
+  req.url = restorePath(req.url)
   return boot()(req, res)
 }

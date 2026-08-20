@@ -62,7 +62,7 @@ The SPA fallback rule must stay **after** the `/api` rule; Netlify matches in fi
 
 ## Option C — Vercel (demo only, ephemeral)
 
-`vercel.json` and `api/[...path].mjs` are configured, and `VITE_BLOOM_DEMO=1` is baked into the build env so the deployment always carries a **"Demo build"** banner. Vercel has no persistent disk: data resets on cold start, concurrent instances diverge, and the 24-hour SLA sweep does not run. Fine for showing people the app; not for a pilot.
+`vercel.json` and `api/index.mjs` are configured (all `/api/*` traffic is routed by an explicit `vercel.json` rewrite — do not rename the function to a `[...slug]` catch-all, which Vercel inferred as a single-segment route and broke sign-in), and `VITE_BLOOM_DEMO=1` is baked into the build env so the deployment always carries a **"Demo build"** banner. Vercel has no persistent disk: data resets on cold start, concurrent instances diverge, and the 24-hour SLA sweep does not run. Fine for showing people the app; not for a pilot.
 
 Vercel project creation needs a team role that can create projects (Owner/Admin) — a Member/Contributor token gets `403 forbidden`. To set it up:
 

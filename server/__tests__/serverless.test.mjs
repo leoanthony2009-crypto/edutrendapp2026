@@ -97,3 +97,60 @@ describe('/api/meta reports deployment facts', () => {
     expect(meta.accounts).toBeGreaterThan(20)
   })
 })
+
+/**
+ * Regression test for the deployed sign-in failure.
+ *
+ * Unlike the pre-parsed-body cases above, this one DOES reproduce a real,
+ * observed defect. On the deployed build `/api/meta` returned JSON while
+ * `/api/auth/login` returned a platform 404 before Express ran: Vercel had
+ * inferred `api/[...path].mjs` as a single-segment dynamic route rather than
+ * a catch-all. Routing is now an explicit vercel.json rewrite that hands the
+ * real path over in `__path`, and restorePath puts it back.
+ *
+ * Deleting the `req.url = restorePath(req.url)` line in api/index.mjs makes
+ * the multi-segment cases below fail.
+ */
+describe('vercel rewrite path restoration', () => {
+  it('restores a multi-segment api path', async () => {
+    const { restorePath } = await import('../../api/index.mjs')
+    expect(restorePath('/api/index?__path=auth/login')).toBe('/api/auth/login')
+    expect(restorePath('/api/index?__path=champion/alerts/alr_1/close')).toBe('/api/champion/alerts/alr_1/close')
+  })
+
+  it('restores a single-segment api path', async () => {
+    const { restorePath } = await import('../../api/index.mjs')
+    expect(restorePath('/api/index?__path=meta')).toBe('/api/meta')
+  })
+
+  it('preserves the caller query string alongside the restored path', async () => {
+    const { restorePath } = await import('../../api/index.mjs')
+    expect(restorePath('/api/index?__path=pulse/history&range=7d')).toBe('/api/pulse/history?range=7d')
+  })
+
+  it('passes through untouched when the host preserves the original url', async () => {
+    const { restorePath } = await import('../../api/index.mjs')
+    expect(restorePath('/api/auth/login')).toBe('/api/auth/login')
+    expect(restorePath('/api/pulse/history?range=30d')).toBe('/api/pulse/history?range=30d')
+  })
+
+  it('routes a rewritten multi-segment login through Express end to end', async () => {
+    const handler = (await import('../../api/index.mjs')).default
+    const http = await import('node:http')
+    const srv = http.createServer((req, res) => handler(req, res))
+    await new Promise((r) => srv.listen(0, r))
+    const url = `http://127.0.0.1:${srv.address().port}`
+    try {
+      // Exactly what the platform delivers after the rewrite fires.
+      const res = await fetch(`${url}/api/index?__path=auth/login`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', 'x-bloom-client': '1' },
+        body: JSON.stringify({ schoolCode: 'STJ', userCode: 'leader', passcode: 'petal-leader' }),
+      })
+      expect(res.status).toBe(200)
+      expect((await res.json()).me.role).toBe('leader')
+    } finally {
+      await new Promise((r) => srv.close(r))
+    }
+  })
+})

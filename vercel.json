@@ -9,12 +9,15 @@
     }
   },
   "functions": {
-    "api/[...path].mjs": {
-      "memory": 1024,
+    "api/index.mjs": {
       "maxDuration": 30
     }
   },
   "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/index?__path=$1"
+    },
     {
       "source": "/((?!api/|assets/).*)",
       "destination": "/index.html"
