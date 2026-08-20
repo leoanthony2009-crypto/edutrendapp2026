@@ -10,7 +10,8 @@
     "test": "BLOOM_TEST=1 vitest run",
     "test:e2e": "playwright test",
     "preview": "vite preview",
-    "server": "node server/index.mjs"
+    "server": "node server/index.mjs",
+    "verify:clean": "bash scripts/verify-clean-clone.sh"
   },
   "dependencies": {
     "@fontsource-variable/bricolage-grotesque": "^5.3.0",

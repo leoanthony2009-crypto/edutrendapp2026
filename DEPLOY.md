@@ -92,6 +92,18 @@ A second school, `HCR` (`leader` / `petal-leader`), exists deliberately: it is s
 
 This is a demo/pilot deploy guide, not a go-live checklist. `BLOOM_SCHOOL_PILOT_READINESS.md` lists the eight items still needing human sign-off — safeguarding policy, DPIA/data-protection review, deployment hardening (HTTPS/HSTS, secrets management, tested restores), monitoring and on-call for the SLA sweep, a contracted notification channel, editorial citation verification, school governance, and an independent penetration test.
 
+### Verify a deploy before trusting it
+
+```bash
+npm run verify:clean
+```
+
+This clones what **git actually holds** (not your working tree), installs with `--ignore-scripts` the way Vercel does, builds, and boots the API. A passing local build does not prove a deploy works: a `.gitignore` rule once swallowed a source file that existed on disk, so every local check passed while the hosted build failed on the missing module. Run this before any deploy you intend to show someone.
+
+### A note on the SQLite driver
+
+The server uses Node's built-in `node:sqlite` (Node ≥22.5), falling back to `better-sqlite3` on older runtimes. This removes the native `node-gyp` build step, which hosts increasingly block by default. Node prints `ExperimentalWarning: SQLite is an experimental feature` — the API is stable enough for a pilot and is covered by `server/__tests__/driver.test.mjs`, but **this is worth a decision before production**: either pin to a Node version where it is stable (Node 24+), or set `BLOOM_FORCE_BETTER_SQLITE` aside and install `better-sqlite3` with install scripts permitted.
+
 Two deployment specifics worth repeating here:
 
 - **Set `NODE_ENV=production`** so the session cookie is issued with `Secure`.
